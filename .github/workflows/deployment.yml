@@ -35,3 +35,5 @@ jobs:
           updatedDescription="${existingDescription}\n${newDescription}"
 
           gh release edit ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --body "$updatedDescription"
+    env:
+      GH_TOKEN: ${{ github.token }}
