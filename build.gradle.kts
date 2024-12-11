@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: "0.0.2-alpha-1"
+version = project.findProperty("releaseVersion") ?: ""
 
 application {
     mainClass.set("com.mesh.ApplicationKt")
@@ -115,7 +115,7 @@ tasks.register("uploadArtifact") {
                 "curl", "--silent", "--request", "POST",
                 "--header", "Authorization: Bearer $base64Token",
                 "--form", "bundle=@${zipFile.absolutePath}",
-                "https://central.sonatype.com/api/v1/publisher/upload?name=kabbitmq"
+                "https://central.sonatype.com/api/v1/publisher/upload?name=kabbitmq&publishingType=AUTOMATIC"
             )
             standardOutput = output
         }.let {
