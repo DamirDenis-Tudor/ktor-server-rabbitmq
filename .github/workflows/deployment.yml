@@ -1,58 +1,40 @@
 name: Deployment
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'New version for the project'
-        required: true
-        default: '0.0.1'
-      release_description:
-        description: 'Describe the changes in this release'
-        required: true
-        default: 'Initial release with basic features'
-
-jobs:
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-
-    - name: Upload in Maven
-      run: |
-        ./gradlew uploadArtifact \
-          -PreleaseVersion="${{ github.event.inputs.release_version }}" \
-          -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
-          -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
-          -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" \
-          -PtokenBase64="${{ secrets.TOKEN_BASE64 }}"
-
   release:
-    if: github.ref == 'refs/heads/main'
+    types:
+      - published
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Checkout sources
+#      uses: actions/checkout@v4
+#
+#    - name: Setup Gradle
+#      uses: gradle/actions/setup-gradle@v3
+#
+#    - name: Upload in Maven
+#      run: |
+#        ./gradlew uploadArtifact \
+#          -PreleaseVersion="${{ github.event.release.tag_name }}" \
+#          -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
+#          -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
+#          -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" \
+#          -PtokenBase64="${{ secrets.TOKEN_BASE64 }}"
+  
+
+  update-release:
     runs-on: ubuntu-latest
-    needs: deploy
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create and push tag
-        run: |
-          git tag "v${{ github.event.inputs.release_version }}"
-          git push origin "v${{ github.event.inputs.release_version }}"
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Update release description
+        uses: actions/github-script@v6
         with:
-          tag_name: "v${{ github.event.inputs.release_version }}"
-          body: |
-            Changelog for ${{ github.event.inputs.release_version }}:
-            - ${{ github.event.inputs.release_description }}
-            
-            You can access the artifact in the Maven repository here:
-            [Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/${{ github.event.repository.name }}/${{ github.event.inputs.release_version }})
+          script: |
+            const newDescription = "[Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/${{ github.event.repository.name }}/${{ github.event.release.tag_name }})"
+            await octokit.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id:  ${{ github.event.release.id }},
+              description: `${github.event.release.body}\n${newDescription}`  # Append to existing description
+            });
