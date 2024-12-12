@@ -1,8 +1,9 @@
 package com.mesh.kabbitMq.builders
 
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
 
-// Builder for exchangeDelete
+@KabbitMQDslMarker
 class KabbitMQExchangeDeleteBuilder(private val channel: Channel) {
     var exchange: String? = null
     var ifUnused: Boolean? = null
