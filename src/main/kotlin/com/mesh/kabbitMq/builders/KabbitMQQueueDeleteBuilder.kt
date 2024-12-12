@@ -1,8 +1,9 @@
 package com.mesh.kabbitMq.builders
 
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
 
-// Builder for queueDelete
+@KabbitMQDslMarker
 class KabbitMQQueueDeleteBuilder(private val channel: Channel) {
     var queue: String? = null
     var ifUnused: Boolean? = null

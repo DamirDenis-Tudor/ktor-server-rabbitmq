@@ -1,8 +1,9 @@
 package com.mesh.kabbitMq.builders
 
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
 
-// Builder for consumerCount
+@KabbitMQDslMarker
 class KabbitMQConsumerCountBuilder(private val channel: Channel) {
     lateinit var queue: String
 

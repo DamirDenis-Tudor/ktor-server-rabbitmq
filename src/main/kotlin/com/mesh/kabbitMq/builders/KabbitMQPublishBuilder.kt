@@ -1,8 +1,10 @@
 package com.mesh.kabbitMq.builders
 
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 
+@KabbitMQDslMarker
 class KabbitMQPublishBuilder(private val channel: Channel) {
     lateinit var exchange: String
     lateinit var routingKey: String

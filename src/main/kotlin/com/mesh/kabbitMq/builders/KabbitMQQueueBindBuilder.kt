@@ -1,7 +1,9 @@
 package com.mesh.kabbitMq.builders
 
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
 
+@KabbitMQDslMarker
 class KabbitMQQueueBindBuilder(private val channel: Channel) {
     lateinit var queue: String
     lateinit var exchange: String
