@@ -7,8 +7,8 @@ val logbackVersion: String by project
 val rabbitmqVersion: String by project
 
 plugins {
-    id("application")
     kotlin("jvm") version "2.1.0"
+    id("application")
     id("maven-publish")
     id("signing")
 }
@@ -25,9 +25,16 @@ repositories {
 }
 
 dependencies {
+    // ktor
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+
+    // rabbitmq
     implementation("com.rabbitmq:amqp-client:$rabbitmqVersion")
+
+    // logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
+    // testing
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
