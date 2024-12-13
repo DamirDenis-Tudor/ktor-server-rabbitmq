@@ -1,6 +1,5 @@
 import com.mesh.kabbitMq.KabbitMQ
 import com.mesh.kabbitMq.dsl.*
-import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.DeliverCallback
@@ -30,16 +29,20 @@ class PluginTesting {
                         exchange = "test_exchange"
                         routingKey = "test_routing_key"
                         message = "test"
+                        basicProperties {
+
+                        }
                     }
                 }
+
+                messageCount {
+                    queue = "test_queue"
+                }.let(::println)
 
                 basicConsume {
                     queue = "test_queue"
                     deliverCallback = DeliverCallback { _, message ->
                         message.body.toString(Charset.defaultCharset()).let(::println)
-                    }
-                    cancelCallback = CancelCallback { _ ->
-                        println("cancelled")
                     }
                 }
             }
@@ -52,7 +55,7 @@ class PluginTesting {
                     installModule()
 
                     connection("connection-1") {
-                        channel("consume-channel-1") {
+                        channel {
                             basicConsume {
                                 queue = "test_queue"
                                 deliverCallback = DeliverCallback { _, message ->
@@ -69,17 +72,21 @@ class PluginTesting {
                         }
                     }
 
-                    channel("consume-channel-2") {
-                        basicConsume {
-                            queue = "test_queue"
-                            deliverCallback = DeliverCallback { _, message ->
-                                message.body.toString(Charset.defaultCharset()).let(::println)
-                            }
-                            cancelCallback = CancelCallback { _ ->
-                                println("cancelled")
+                    connection("connection-1") {
+                        channel("consume-channel-2") {
+                            basicConsume {
+                                queue = "test_queue"
+                                deliverCallback = DeliverCallback { _, message ->
+                                    message.body.toString(Charset.defaultCharset()).let(::println)
+                                }
+                                cancelCallback = CancelCallback { _ ->
+                                    println("cancelled")
+                                }
                             }
                         }
                     }
+
+
 
                     exchangeDeclare {
                         exchange = "dead-letter-exchange"

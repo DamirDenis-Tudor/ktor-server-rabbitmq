@@ -2,6 +2,7 @@ package com.mesh.kabbitMq.builders.channel
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.util.StateDelegator
+import com.mesh.kabbitMq.util.StateDelegator.Companion.withThisRef
 import com.rabbitmq.client.*
 import kotlin.reflect.full.memberProperties
 
@@ -20,8 +21,8 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
     var cancelCallback: CancelCallback by StateDelegator()
     var shutdownSignalCallback: ConsumerShutdownSignalCallback by StateDelegator()
 
-    fun build(): String {
-        return with(StateDelegator){
+    fun build() {
+        return withThisRef(this@KabbitMQBasicConsumeBuilder){
             when {
                 initialized(::queue, ::callback) -> {
                     channel.basicConsume(queue, autoAck, callback)
@@ -35,7 +36,7 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
                     channel.basicConsume(queue, autoAck, deliverCallback, shutdownSignalCallback)
                 }
 
-                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                initialized(::deliverCallback, ::cancelCallback) -> {
                     channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback, shutdownSignalCallback)
                 }
 
@@ -64,6 +65,7 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
                 }
 
                 else -> {
+                    stateTrace(this@KabbitMQBasicConsumeBuilder).let { println(it) }
                     error("Unsupported combination of parameters for basicConsume.")
                 }
             }
