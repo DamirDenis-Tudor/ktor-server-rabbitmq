@@ -15,7 +15,6 @@ inline fun Application.connection(id: String, block: Connection.() -> Unit) =
 inline fun Application.channel(id: String, block: Channel.() -> Unit) =
     attributes[KabbitMQServiceKey].getChannel(id).apply(block)
 
-
 @KabbitMQDslMarker
 inline fun Application.basicAck(block: KabbitMQBasicAckBuilder.() -> Unit) =
     KabbitMQBasicAckBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
@@ -59,6 +58,10 @@ inline fun Application.consumerCount(block: KabbitMQConsumerCountBuilder.() -> U
 @KabbitMQDslMarker
 inline fun Application.basicPublish(block: KabbitMQPublishBuilder.() -> Unit) =
     KabbitMQPublishBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
+
+@KabbitMQDslMarker
+inline fun KabbitMQPublishBuilder.basicProperties(block: KabbitMQPublishBuilder.KabbitMQBasicPropertiesBuilder.() -> Unit) =
+    KabbitMQPublishBuilder.KabbitMQBasicPropertiesBuilder().apply(block).build()
 
 @KabbitMQDslMarker
 inline fun Application.queueUnbind(block: KabbitMQQueueUnbindBuilder.() -> Unit) =

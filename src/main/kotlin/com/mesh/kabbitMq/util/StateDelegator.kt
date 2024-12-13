@@ -1,6 +1,7 @@
 package com.mesh.kabbitMq.util
 
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.memberProperties
 
 sealed class State<out T> {
     data class Initialized<T>(val value: T) : State<T>()
@@ -11,26 +12,38 @@ class StateDelegator<T : Any>(
     private var state: State<T> = State.Uninitialized
 ) {
     companion object {
-        private val stateMap = mutableMapOf<String, State<Any>>()
+        private val stateMap = mutableMapOf<Pair<String, String>, State<Any>>()
+        lateinit var ref: Any
 
-        fun initialized(vararg properties: KProperty<*>): Boolean {
-            return properties.all { stateMap[it.name] is State.Initialized }
+        fun initialized(vararg properties: KProperty<*>, thisRef: Any = ref): Boolean {
+            return properties.all {
+                stateMap.getOrPut(thisRef.javaClass.simpleName to it.name) { State.Uninitialized } !is State.Uninitialized
+            }
         }
 
-        fun stateTrace(properties: Collection<KProperty<*>>): Map<String, Boolean> {
-            return properties.associate { it.name to (stateMap[it.name] is State.Initialized) }
+        fun stateTrace(thisRef: Any = ref): String {
+            return thisRef::class.memberProperties.joinToString("\n") {
+                "${thisRef.javaClass.simpleName}: <${it.name}> -> ${(stateMap[thisRef.javaClass.simpleName to it.name] is State.Initialized)}"
+            }
+        }
+
+        fun withThisRef(ref: Any, block: StateDelegator.Companion.() -> Unit) {
+            this.ref = ref
+            this.apply(block)
         }
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    operator fun getValue(thisRef: Any, property: KProperty<*>): T {
         return when (val currentState = state) {
             is State.Initialized -> currentState.value
-            else -> throw UninitializedPropertyAccessException("Property ${property.name} must be initialized before accessing.")
+            else -> throw UninitializedPropertyAccessException(
+                "Property <${property.javaClass}>: <${property.name}> must be initialized before accessing."
+            )
         }
     }
 
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    operator fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
         state = State.Initialized(value)
-        stateMap[property.name] = State.Initialized(value)
+        stateMap[thisRef.javaClass.simpleName to property.name] = State.Initialized(value)
     }
 }
