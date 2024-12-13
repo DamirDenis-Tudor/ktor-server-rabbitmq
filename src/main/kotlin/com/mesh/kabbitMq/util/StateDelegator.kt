@@ -14,8 +14,8 @@ class StateDelegator<T : Any>(
     companion object {
         private val stateMap = mutableMapOf<String, State<Any>>()
 
-        fun initialized(property: KProperty<*>): Boolean {
-            return stateMap[property.name] is State.Initialized
+        fun initialized(vararg properties: KProperty<*>): Boolean {
+            return properties.all { stateMap[it.name] is State.Initialized }
         }
     }
 

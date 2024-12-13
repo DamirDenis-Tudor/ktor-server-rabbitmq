@@ -18,7 +18,7 @@ class KabbitMQPublishBuilder(private val channel: Channel) {
     fun build() {
         with(StateDelegator) {
             when {
-                initialized(::mandatory) && initialized(::immediate) -> {
+                initialized(::mandatory, ::immediate) -> {
                     channel.basicPublish(exchange, routingKey, mandatory, immediate, basicProperties, message.toByteArray())
                 }
                 initialized(::immediate) -> {
