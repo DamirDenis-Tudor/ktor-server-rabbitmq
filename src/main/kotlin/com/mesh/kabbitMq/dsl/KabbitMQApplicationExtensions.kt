@@ -1,14 +1,20 @@
 package com.mesh.kabbitMq.dsl
 
 import com.mesh.kabbitMq.KabbitMQServiceKey
-import com.mesh.kabbitMq.builders.*
+import com.mesh.kabbitMq.builders.channel.*
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
+import com.rabbitmq.client.Connection
 import io.ktor.server.application.*
 
 @KabbitMQDslMarker
-inline fun Application.channel(block: Channel.() -> Unit) =
-    attributes[KabbitMQServiceKey].getChannel().apply(block)
+inline fun Application.connection(id: String, block: Connection.() -> Unit) =
+    attributes[KabbitMQServiceKey].getConnection(id).apply(block)
+
+@KabbitMQDslMarker
+inline fun Application.channel(id: String, block: Channel.() -> Unit) =
+    attributes[KabbitMQServiceKey].getChannel(id).apply(block)
+
 
 @KabbitMQDslMarker
 inline fun Application.basicAck(block: KabbitMQBasicAckBuilder.() -> Unit) =
@@ -51,7 +57,7 @@ inline fun Application.consumerCount(block: KabbitMQConsumerCountBuilder.() -> U
     KabbitMQConsumerCountBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
 
 @KabbitMQDslMarker
-inline fun Application.publish(block: KabbitMQPublishBuilder.() -> Unit) =
+inline fun Application.basicPublish(block: KabbitMQPublishBuilder.() -> Unit) =
     KabbitMQPublishBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
 
 @KabbitMQDslMarker
