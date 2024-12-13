@@ -1,67 +1,72 @@
 package com.mesh.kabbitMq.builders.channel
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
+import com.mesh.kabbitMq.util.StateDelegator
 import com.rabbitmq.client.*
+import kotlin.reflect.full.memberProperties
 
 @KabbitMQDslMarker
 class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
 
-    lateinit var queue: String
     var autoAck: Boolean = true
-    lateinit var consumerTag: String
     var noLocal: Boolean = false
     var exclusive: Boolean = false
     var arguments: Map<String, Any> = emptyMap()
-    lateinit var callback: Consumer
-    lateinit var deliverCallback: DeliverCallback
-    lateinit var cancelCallback: CancelCallback
-    lateinit var shutdownSignalCallback: ConsumerShutdownSignalCallback
+
+    var queue: String by StateDelegator()
+    var consumerTag: String by StateDelegator()
+    var callback: Consumer by StateDelegator()
+    var deliverCallback: DeliverCallback by StateDelegator()
+    var cancelCallback: CancelCallback by StateDelegator()
+    var shutdownSignalCallback: ConsumerShutdownSignalCallback by StateDelegator()
 
     fun build(): String {
-        if (!::queue.isInitialized) error("Queue must be provided")
+        return with(StateDelegator){
+            when {
+                initialized(::queue, ::callback) -> {
+                    channel.basicConsume(queue, autoAck, callback)
+                }
 
-        return when {
-            ::callback.isInitialized -> {
-                channel.basicConsume(queue, autoAck, callback)
+                initialized(::deliverCallback, ::cancelCallback) -> {
+                    channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback)
+                }
+
+                initialized(::deliverCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, deliverCallback, shutdownSignalCallback)
+                }
+
+                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback, shutdownSignalCallback)
+                }
+
+                initialized(::deliverCallback, ::cancelCallback) -> {
+                    channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback)
+                }
+
+                initialized(::deliverCallback, ::shutdownSignalCallback)  -> {
+                    channel.basicConsume(queue, autoAck, arguments, deliverCallback, shutdownSignalCallback)
+                }
+
+                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
+                }
+
+                initialized(::consumerTag) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, cancelCallback)
+                }
+
+                initialized(::consumerTag, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, shutdownSignalCallback)
+                }
+
+                initialized(::consumerTag, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, noLocal, exclusive, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
+                }
+
+                else -> {
+                    error("Unsupported combination of parameters for basicConsume.")
+                }
             }
-
-            ::deliverCallback.isInitialized && ::cancelCallback.isInitialized -> {
-                channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback)
-            }
-
-            ::deliverCallback.isInitialized && ::shutdownSignalCallback.isInitialized -> {
-                channel.basicConsume(queue, autoAck, deliverCallback, shutdownSignalCallback)
-            }
-
-            ::deliverCallback.isInitialized && ::cancelCallback.isInitialized && ::shutdownSignalCallback.isInitialized -> {
-                channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback, shutdownSignalCallback)
-            }
-
-            ::deliverCallback.isInitialized && ::cancelCallback.isInitialized && arguments.isNotEmpty() -> {
-                channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback)
-            }
-
-            ::deliverCallback.isInitialized && ::shutdownSignalCallback.isInitialized && arguments.isNotEmpty() -> {
-                channel.basicConsume(queue, autoAck, arguments, deliverCallback, shutdownSignalCallback)
-            }
-
-            ::deliverCallback.isInitialized && ::cancelCallback.isInitialized && ::shutdownSignalCallback.isInitialized && arguments.isNotEmpty() -> {
-                channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
-            }
-
-            ::consumerTag.isInitialized -> {
-                channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, cancelCallback)
-            }
-
-            ::consumerTag.isInitialized && ::shutdownSignalCallback.isInitialized -> {
-                channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, shutdownSignalCallback)
-            }
-
-            ::consumerTag.isInitialized && ::deliverCallback.isInitialized && ::cancelCallback.isInitialized && ::shutdownSignalCallback.isInitialized && arguments.isNotEmpty() -> {
-                channel.basicConsume(queue, autoAck, consumerTag, noLocal, exclusive, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
-            }
-
-            else -> error("Unsupported combination of parameters for basicConsume.")
         }
     }
 }

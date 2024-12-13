@@ -10,12 +10,15 @@ sealed class State<out T> {
 class StateDelegator<T : Any>(
     private var state: State<T> = State.Uninitialized
 ) {
-
     companion object {
         private val stateMap = mutableMapOf<String, State<Any>>()
 
         fun initialized(vararg properties: KProperty<*>): Boolean {
             return properties.all { stateMap[it.name] is State.Initialized }
+        }
+
+        fun stateTrace(properties: Collection<KProperty<*>>): Map<String, Boolean> {
+            return properties.associate { it.name to (stateMap[it.name] is State.Initialized) }
         }
     }
 

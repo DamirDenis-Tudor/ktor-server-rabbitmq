@@ -1,17 +1,13 @@
 package com.mesh.kabbitMq.builders.channel
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
+import com.mesh.kabbitMq.util.StateDelegator
 import com.rabbitmq.client.Channel
 
 @KabbitMQDslMarker
 class KabbitMQMessageCountBuilder(private val channel: Channel) {
-    var queue: String? = null
+    var queue: String by StateDelegator()
 
-    fun build(): Long {
-        return if (queue != null) {
-            channel.messageCount(queue!!)
-        } else {
-            0L
-        }
-    }
+    fun build(): Long =
+        channel.messageCount(queue)
 }

@@ -1,5 +1,4 @@
 import com.mesh.kabbitMq.KabbitMQ
-import com.mesh.kabbitMq.builders.channel.PublishWithoutFlagsDSL
 import com.mesh.kabbitMq.dsl.*
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.BuiltinExchangeType
@@ -26,12 +25,21 @@ class PluginTesting {
             application {
                 installModule()
 
-                basicPublish {
-                    exchange = ""
-                    routingKey = ""
-                    message = ""
-                    basicProperties = AMQP.BasicProperties().apply {
-                        headers["Content-Type"] = "application/json"
+                repeat(10){
+                    basicPublish {
+                        exchange = "test_exchange"
+                        routingKey = "test_routing_key"
+                        message = "test"
+                    }
+                }
+
+                basicConsume {
+                    queue = "test_queue"
+                    deliverCallback = DeliverCallback { _, message ->
+                        message.body.toString(Charset.defaultCharset()).let(::println)
+                    }
+                    cancelCallback = CancelCallback { _ ->
+                        println("cancelled")
                     }
                 }
             }
