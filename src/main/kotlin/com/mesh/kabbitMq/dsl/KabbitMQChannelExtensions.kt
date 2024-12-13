@@ -1,14 +1,14 @@
 package com.mesh.kabbitMq.dsl
 
-import com.mesh.kabbitMq.KabbitMQServiceKey
 import com.mesh.kabbitMq.builders.channel.*
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 
 @KabbitMQDslMarker
-inline fun Connection.channel(id: String, block: Channel.() -> Unit): Channel =
-    this.createChannel(id).also(block)
+inline fun Connection.channel(block: Channel.() -> Unit): Channel {
+    return this.createChannel().also(block)
+}
 
 @KabbitMQDslMarker
 inline fun Channel.basicConsume(block: KabbitMQBasicConsumeBuilder.() -> Unit) =

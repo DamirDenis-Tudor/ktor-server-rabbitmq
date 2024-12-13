@@ -24,8 +24,23 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
     fun build() {
         return withThisRef(this@KabbitMQBasicConsumeBuilder){
             when {
-                initialized(::queue, ::callback) -> {
-                    channel.basicConsume(queue, autoAck, callback)
+                initialized(::consumerTag, ::deliverCallback, ::cancelCallback) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, cancelCallback)
+                }
+                initialized(::consumerTag, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, noLocal, exclusive, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
+                }
+
+                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
+                }
+
+                initialized(::deliverCallback, ::cancelCallback) -> {
+                    channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback)
+                }
+
+                initialized(::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
+                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, shutdownSignalCallback)
                 }
 
                 initialized(::deliverCallback, ::cancelCallback) -> {
@@ -37,10 +52,6 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
                 }
 
                 initialized(::deliverCallback, ::cancelCallback) -> {
-                    channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback, shutdownSignalCallback)
-                }
-
-                initialized(::deliverCallback, ::cancelCallback) -> {
                     channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback)
                 }
 
@@ -48,20 +59,8 @@ class KabbitMQBasicConsumeBuilder(private val channel: Channel) {
                     channel.basicConsume(queue, autoAck, arguments, deliverCallback, shutdownSignalCallback)
                 }
 
-                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(queue, autoAck, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
-                }
-
-                initialized(::consumerTag) -> {
-                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, cancelCallback)
-                }
-
-                initialized(::consumerTag, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(queue, autoAck, consumerTag, deliverCallback, shutdownSignalCallback)
-                }
-
-                initialized(::consumerTag, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(queue, autoAck, consumerTag, noLocal, exclusive, arguments, deliverCallback, cancelCallback, shutdownSignalCallback)
+                initialized(::queue, ::callback) -> {
+                    channel.basicConsume(queue, autoAck, callback)
                 }
 
                 else -> {

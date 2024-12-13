@@ -24,7 +24,7 @@ class PluginTesting {
             application {
                 installModule()
 
-                repeat(10){
+                repeat(10) {
                     basicPublish {
                         exchange = "test_exchange"
                         routingKey = "test_routing_key"
@@ -47,71 +47,77 @@ class PluginTesting {
                 }
             }
         }
+    }
 
-        @Test
-        fun testInstall() = runBlocking {
-            runTestApplication {
-                application {
-                    installModule()
+    @Test
+    fun testInstall1() = runBlocking {
+        runTestApplication {
+            application {
+                installModule()
 
-                    connection("connection-1") {
-                        channel {
-                            basicConsume {
-                                queue = "test_queue"
-                                deliverCallback = DeliverCallback { _, message ->
-                                    message.body.toString(Charset.defaultCharset()).let(::println)
-                                }
-                                cancelCallback = CancelCallback { _ ->
-                                    println("cancelled")
-                                }
-                            }
+                repeat(10) {
+                    basicPublish {
+                        exchange = "test_exchange"
+                        routingKey = "test_routing_key"
+                        message = "test"
+                    }
+                }
 
-                            basicPublish {
-                                exchange = ""
-                            }
+                channel("test") {
+                    basicConsume {
+                        consumerTag = "cancel"
+                        queue = "test_queue"
+                        deliverCallback = DeliverCallback { _, message ->
+                            println("Consummmerrrrrrrr")
+                            message.body.toString(Charset.defaultCharset()).let(::println)
+                        }
+                        cancelCallback = CancelCallback { _ ->
+                            println("cancelled")
                         }
                     }
 
-                    connection("connection-1") {
-                        channel("consume-channel-2") {
-                            basicConsume {
-                                queue = "test_queue"
-                                deliverCallback = DeliverCallback { _, message ->
-                                    message.body.toString(Charset.defaultCharset()).let(::println)
-                                }
-                                cancelCallback = CancelCallback { _ ->
-                                    println("cancelled")
-                                }
-                            }
+                    basicCancel("cancel")
+                    close()
+                }
+
+
+                channel("test1") {
+                    basicConsume {
+                        queue = "test_queue"
+                        deliverCallback = DeliverCallback { _, message ->
+                            message.body.toString(Charset.defaultCharset()).let(::println)
+                        }
+                        cancelCallback = CancelCallback { _ ->
+                            println("cancelled")
                         }
                     }
+                }
 
 
+                exchangeDeclare {
+                    exchange = "dead-letter-exchange"
+                    type = BuiltinExchangeType.DIRECT
+                    durable = true
+                    autoDelete = true
+                    arguments = mapOf()
+                }
 
-                    exchangeDeclare {
-                        exchange = "dead-letter-exchange"
-                        type = BuiltinExchangeType.DIRECT
-                        durable = true
-                        autoDelete = true
-                        arguments = mapOf()
-                    }
+                queueDeclare {
+                    queue = "dead-letter-queue"
+                    durable = true
+                    arguments = mapOf()
+                }
 
-                    queueDeclare {
-                        queue = "dead-letter-queue"
-                        durable = true
-                        arguments = mapOf()
-                    }
+                queueBind {
+                    queue = "dead-letter-queue"
+                    routingKey = "routing-key"
+                    exchange = "dead-letter-exchange"
+                }
 
-                    queueBind {
-                        queue = "dead-letter-queue"
-                        routingKey = "routing-key"
-                        exchange = "dead-letter-exchange"
-                    }
-
-                    while (true) {
-                    }
+                while (true) {
                 }
             }
         }
     }
 }
+
