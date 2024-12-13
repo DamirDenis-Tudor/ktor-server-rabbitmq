@@ -1,5 +1,6 @@
 package com.mesh.kabbitMq.dsl
 
+import com.mesh.kabbitMq.builders.channel.KabbitMQBasicConsumeBuilder
 import com.mesh.kabbitMq.builders.channel.*
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
