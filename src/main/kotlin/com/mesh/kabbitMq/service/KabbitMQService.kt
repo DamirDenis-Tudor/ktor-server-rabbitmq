@@ -8,14 +8,16 @@ class KabbitMQService(private val config: KabbitMQConfig) {
 
     private val connectionFactory = ConnectionFactory().apply { setUri(config.uri) }
 
-    private val connection: Connection by lazy {
-        connectionFactory.newConnection(config.connectionName)
-    }
+    private val connectionCache = mutableMapOf<String, Connection>()
 
     private val channelCache = mutableMapOf<String, Channel>()
 
-    fun getChannel(id: String = KabbitMQService::class.simpleName!!) =
-        channelCache.getOrPut(id) { connection.createChannel() }
+    fun getChannel(id: String = "DEFAULT", connectionId: String = "DEFAULT") =
+        channelCache.getOrPut(id) { getConnection(connectionId).createChannel() }
 
-    fun close() = connection.close()
+    fun getConnection(id: String = "DEFAULT") =
+        connectionCache.getOrPut(id) { connectionFactory.newConnection() }
+
+    fun close(connectionId: String) =
+        connectionCache[connectionId]?.close()
 }

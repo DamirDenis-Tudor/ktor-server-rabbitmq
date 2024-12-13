@@ -10,6 +10,7 @@ val KabbitMQServiceKey = AttributeKey<KabbitMQService>("KabbitMQService")
 val KabbitMQ = createApplicationPlugin("KabbitMQ", ::KabbitMQConfig) {
     with( KabbitMQService(pluginConfig)){
         application.attributes.put(KabbitMQServiceKey, this)
-        application.monitor.subscribe(ApplicationStopping) { close() }
+        application.monitor.subscribe(ApplicationStopping) { //close() }
+        }
     }
 }
