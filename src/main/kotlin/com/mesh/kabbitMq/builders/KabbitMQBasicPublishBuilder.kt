@@ -3,6 +3,7 @@ package com.mesh.kabbitMq.builders
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.State
 import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AMQP.BasicProperties
@@ -26,6 +27,7 @@ class KabbitMQBasicPublishBuilder(
 
     init {
         routingKey = ""
+        properties = BasicProperties()
     }
 
     @KabbitMQDslMarker
@@ -38,45 +40,46 @@ class KabbitMQBasicPublishBuilder(
         message = Json.encodeToString(block).toByteArray(Charsets.UTF_8)
     }
 
-    fun build() {
-        withThisRef(this@KabbitMQBasicPublishBuilder){
-            when {
-                initialized(::mandatory, ::immediate) -> {
-                    channel.basicPublish(
-                        exchange,
-                        routingKey,
-                        mandatory,
-                        immediate,
-                        properties,
-                        message
-                    )
-                }
-                initialized(::immediate) -> {
-                    channel.basicPublish(
-                        exchange,
-                        routingKey,
-                        immediate,
-                        properties,
-                        message
-                    )
-                }
-                initialized(::mandatory) -> {
-                    channel.basicPublish(
-                        exchange,
-                        routingKey,
-                        mandatory,
-                        properties,
-                        message
-                    )
-                }
-                else -> {
-                    channel.basicPublish(
-                        exchange,
-                        routingKey,
-                        properties,
-                        message
-                    )
-                }
+    fun build() = withThisRef(this@KabbitMQBasicPublishBuilder) {
+        return@withThisRef when {
+            initialized(::mandatory, ::immediate) -> {
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
+                    mandatory,
+                    immediate,
+                    properties,
+                    message
+                )
+            }
+
+            initialized(::immediate) -> {
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
+                    immediate,
+                    properties,
+                    message
+                )
+            }
+
+            initialized(::mandatory) -> {
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
+                    mandatory,
+                    properties,
+                    message
+                )
+            }
+
+            else -> {
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
+                    properties,
+                    message
+                )
             }
         }
     }

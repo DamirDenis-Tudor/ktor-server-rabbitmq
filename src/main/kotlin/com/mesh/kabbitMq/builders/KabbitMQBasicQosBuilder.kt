@@ -2,6 +2,7 @@ package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.Channel
 
@@ -12,18 +13,18 @@ class KabbitMQBasicQosBuilder(private val channel: Channel) {
     var prefetchCount: Int by Delegator()
     var global: Boolean by Delegator()
 
-    fun build() {
-        withThisRef(this@KabbitMQBasicQosBuilder){
-            when {
-                initialized(::prefetchCount, ::global) -> {
-                    channel.basicQos(prefetchSize, prefetchCount, global )
-                }
-                initialized(::prefetchCount) -> {
-                    channel.basicQos(prefetchCount, global)
-                }
-                else -> {
-                    channel.basicQos(prefetchCount)
-                }
+    fun build() = withThisRef(this@KabbitMQBasicQosBuilder) {
+        return@withThisRef when {
+            initialized(::prefetchCount, ::global) -> {
+                channel.basicQos(prefetchSize, prefetchCount, global)
+            }
+
+            initialized(::prefetchCount) -> {
+                channel.basicQos(prefetchCount, global)
+            }
+
+            else -> {
+                channel.basicQos(prefetchCount)
             }
         }
     }

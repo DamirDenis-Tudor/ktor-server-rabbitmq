@@ -92,6 +92,8 @@ class PluginTesting {
                 }
             }
 
+            assertEquals(1, consumerCount { queue = "test-queue" })
+
             basicConsume {
                 queue = "dlq"
                 autoAck = true

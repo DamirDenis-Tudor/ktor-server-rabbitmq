@@ -2,7 +2,9 @@ package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
+import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 
 @KabbitMQDslMarker
@@ -16,15 +18,14 @@ class KabbitMQQueueBindBuilder(private val channel: Channel) {
         routingKey = ""
     }
 
-    fun build() {
-        withThisRef(this@KabbitMQQueueBindBuilder){
-            when  {
-                initialized(::arguments) ->{
-                    channel.queueBind(queue, exchange, routingKey, arguments)
-                }
-                else -> {
-                    channel.queueBind(queue, exchange, routingKey)
-                }
+    fun build(): AMQP.Queue.BindOk = withThisRef(this@KabbitMQQueueBindBuilder) {
+        return@withThisRef when {
+            initialized(::arguments) -> {
+                channel.queueBind(queue, exchange, routingKey, arguments)
+            }
+
+            else -> {
+                channel.queueBind(queue, exchange, routingKey)
             }
         }
     }

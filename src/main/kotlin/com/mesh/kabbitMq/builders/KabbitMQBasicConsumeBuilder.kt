@@ -2,6 +2,8 @@ package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
+import com.mesh.kabbitMq.delegator.Delegator.Companion.stateTrace
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.*
 import kotlinx.serialization.json.Json
@@ -60,106 +62,104 @@ class KabbitMQBasicConsumeBuilder(
         }
     }
 
-    fun build() {
-        return withThisRef(this@KabbitMQBasicConsumeBuilder) {
-            when {
-                initialized(::consumerTag, ::deliverCallback, ::cancelCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        consumerTag,
-                        deliverCallback,
-                        cancelCallback
-                    )
-                }
+    fun build(): String = withThisRef(this@KabbitMQBasicConsumeBuilder) {
+        return@withThisRef when {
+            initialized(::consumerTag, ::deliverCallback, ::cancelCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    consumerTag,
+                    deliverCallback,
+                    cancelCallback
+                )
+            }
 
-                initialized(::consumerTag, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        consumerTag,
-                        noLocal,
-                        exclusive,
-                        arguments,
-                        deliverCallback,
-                        cancelCallback,
-                        shutdownSignalCallback
-                    )
-                }
+            initialized(::consumerTag, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    consumerTag,
+                    noLocal,
+                    exclusive,
+                    arguments,
+                    deliverCallback,
+                    cancelCallback,
+                    shutdownSignalCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        arguments,
-                        deliverCallback,
-                        cancelCallback,
-                        shutdownSignalCallback
-                    )
-                }
+            initialized(::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    arguments,
+                    deliverCallback,
+                    cancelCallback,
+                    shutdownSignalCallback
+                )
+            }
 
-                initialized(::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        consumerTag,
-                        deliverCallback,
-                        shutdownSignalCallback
-                    )
-                }
+            initialized(::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    consumerTag,
+                    deliverCallback,
+                    shutdownSignalCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        arguments,
-                        deliverCallback,
-                        shutdownSignalCallback
-                    )
-                }
+            initialized(::deliverCallback, ::shutdownSignalCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    arguments,
+                    deliverCallback,
+                    shutdownSignalCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::shutdownSignalCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        deliverCallback,
-                        shutdownSignalCallback
-                    )
-                }
+            initialized(::deliverCallback, ::shutdownSignalCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    deliverCallback,
+                    shutdownSignalCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::cancelCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        deliverCallback,
-                        cancelCallback
-                    )
-                }
+            initialized(::deliverCallback, ::cancelCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    deliverCallback,
+                    cancelCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::cancelCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        deliverCallback,
-                        cancelCallback
-                    )
-                }
+            initialized(::deliverCallback, ::cancelCallback) -> {
+                 channel.basicConsume(
+                    queue,
+                    autoAck,
+                    deliverCallback,
+                    cancelCallback
+                )
+            }
 
-                initialized(::deliverCallback, ::cancelCallback) -> {
-                    channel.basicConsume(
-                        queue,
-                        autoAck,
-                        arguments,
-                        deliverCallback,
-                        cancelCallback
-                    )
-                }
+            initialized(::deliverCallback, ::cancelCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    arguments,
+                    deliverCallback,
+                    cancelCallback
+                )
+            }
 
 
-                else -> {
-                    stateTrace().let { println(it) }
-                    error("Unsupported combination of parameters for basicConsume.")
-                }
+            else -> {
+                stateTrace().forEach { println(it) }
+                error("Unsupported combination of parameters for basicConsume.")
             }
         }
     }

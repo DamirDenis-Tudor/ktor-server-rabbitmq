@@ -3,6 +3,7 @@ package com.mesh.kabbitMq.builders
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.State
 import com.mesh.kabbitMq.delegator.Delegator
+import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Channel
 
@@ -23,7 +24,6 @@ class KabbitMQExchangeDeclareBuilder(private val channel: Channel) {
         arguments = emptyMap()
     }
 
-    fun build() {
+    fun build(): AMQP.Exchange.DeclareOk =
         channel.exchangeDeclare(exchange, type, durable, autoDelete, internal, arguments)
-    }
 }

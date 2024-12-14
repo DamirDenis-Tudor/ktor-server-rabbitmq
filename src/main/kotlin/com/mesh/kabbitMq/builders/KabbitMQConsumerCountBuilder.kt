@@ -9,7 +9,5 @@ import com.rabbitmq.client.Channel
 class KabbitMQConsumerCountBuilder(private val channel: Channel) {
     var queue: String by Delegator()
 
-    fun build(): Long {
-        return channel.consumerCount(queue)
-    }
+    fun build(): Long = channel.consumerCount(queue)
 }
