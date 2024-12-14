@@ -57,7 +57,10 @@ publishing {
             pom {
                 name.set("Ktor rabbitMQ plugin")
                 packaging = "jar"
-                description.set(".")
+                description.set(
+                        "KabbitMQ is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the com.rabbitmq:amqp-client.\n" +
+                        "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n")
+
                 url.set("https://github.com/DamirDenis-Tudor/kabbitmq")
 
                 scm {
@@ -88,7 +91,6 @@ publishing {
         maven{
             url = uri("$projectDir/build/publish")
         }
-        mavenLocal()
     }
 }
 
