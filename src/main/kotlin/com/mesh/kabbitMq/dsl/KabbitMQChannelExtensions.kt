@@ -51,8 +51,8 @@ inline fun Channel.consumerCount(block: KabbitMQConsumerCountBuilder.() -> Unit)
     KabbitMQConsumerCountBuilder(this).apply(block).build()
 
 @KabbitMQDslMarker
-inline fun Channel.basicPublish(block: KabbitMQPublishBuilder.() -> Unit) =
-    KabbitMQPublishBuilder(this).apply(block).build()
+inline fun <reified T : Any> Channel.basicPublish(block: KabbitMQPublishBuilder.() -> Unit) =
+    KabbitMQPublishBuilder(this,).apply(block).build()
 
 @KabbitMQDslMarker
 inline fun Channel.queueUnbind(block: KabbitMQQueueUnbindBuilder.() -> Unit) =

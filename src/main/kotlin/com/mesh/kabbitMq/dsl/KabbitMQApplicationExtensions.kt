@@ -2,6 +2,7 @@ package com.mesh.kabbitMq.dsl
 
 import com.mesh.kabbitMq.KabbitMQServiceKey
 import com.mesh.kabbitMq.builders.channel.*
+import com.mesh.kabbitMq.service.KabbitMQConfig
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection

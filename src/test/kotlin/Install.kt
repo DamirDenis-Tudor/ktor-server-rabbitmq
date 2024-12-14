@@ -1,12 +1,10 @@
 import com.mesh.kabbitMq.KabbitMQ
 import com.mesh.kabbitMq.dsl.*
 import com.rabbitmq.client.BuiltinExchangeType
-import com.rabbitmq.client.CancelCallback
-import com.rabbitmq.client.DeliverCallback
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
-import java.nio.charset.Charset
+import kotlinx.serialization.Serializable
 import kotlin.test.Test
 
 private fun Application.installModule() {
@@ -15,6 +13,12 @@ private fun Application.installModule() {
         connectionName = "localhost"
     }
 }
+
+@Serializable
+data class Message(
+    var text: String = "fdsfsd",
+    var mama: String = "aaaaa"
+)
 
 class PluginTesting {
 
@@ -28,9 +32,8 @@ class PluginTesting {
                     basicPublish {
                         exchange = "test_exchange"
                         routingKey = "test_routing_key"
-                        message = "test"
-                        basicProperties {
-
+                        message{
+                            Message("Test", "Test")
                         }
                     }
                 }
@@ -41,8 +44,11 @@ class PluginTesting {
 
                 basicConsume {
                     queue = "test_queue"
-                    deliverCallback = DeliverCallback { _, message ->
-                        message.body.toString(Charset.defaultCharset()).let(::println)
+                    deliverCallback<Message>{ tag, message ->
+                        println("$tag: $message")
+                    }
+                    cancelCallback { tag ->
+                       println(tag)
                     }
                 }
             }
@@ -59,7 +65,7 @@ class PluginTesting {
                     basicPublish {
                         exchange = "test_exchange"
                         routingKey = "test_routing_key"
-                        message = "test"
+                        message = "".toByteArray()
                     }
                 }
 
@@ -67,11 +73,11 @@ class PluginTesting {
                     basicConsume {
                         consumerTag = "cancel"
                         queue = "test_queue"
-                        deliverCallback = DeliverCallback { _, message ->
+                        deliverCallback<Message> { _, message ->
                             println("Consummmerrrrrrrr")
-                            message.body.toString(Charset.defaultCharset()).let(::println)
+                            message.let(::println)
                         }
-                        cancelCallback = CancelCallback { _ ->
+                        cancelCallback { _ ->
                             println("cancelled")
                         }
                     }
@@ -82,15 +88,6 @@ class PluginTesting {
 
 
                 channel("test1") {
-                    basicConsume {
-                        queue = "test_queue"
-                        deliverCallback = DeliverCallback { _, message ->
-                            message.body.toString(Charset.defaultCharset()).let(::println)
-                        }
-                        cancelCallback = CancelCallback { _ ->
-                            println("cancelled")
-                        }
-                    }
                 }
 
 
