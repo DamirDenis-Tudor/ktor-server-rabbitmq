@@ -21,10 +21,10 @@ inline fun Application.channel(id: String, autoClose: Boolean = true, block: Cha
 
 @KabbitMQDslMarker
 inline fun Connection.channel(block: Channel.() -> Unit): Channel {
-    return this.createChannel().also(block)
+    return this.createChannel().also(block).apply{ this.close() }
 }
 
 @KabbitMQDslMarker
 inline fun Connection.channel(id: String, block: Channel.() -> Unit): Channel {
-    return this.createChannel().also(block)
+    return this.createChannel().also(block).apply{ this.close() }
 }

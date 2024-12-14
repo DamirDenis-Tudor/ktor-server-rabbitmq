@@ -32,9 +32,33 @@ class PluginTesting {
     }
 
     @Test
+    fun wrong() = testApplication {
+        application {
+            install(KabbitMQ) {
+                uri = "amqp://guest:guest@localhost:5672"
+                connectionName = "guest"
+            }
+
+            basicConsume {
+                queue = "test-queue"
+                deliverCallback<String> { _, _ ->
+
+                }
+            }
+        }
+    }
+
+    @Test
     fun testInstall() = testApplication {
         application {
-            install(KabbitMQ)
+            install(KabbitMQ) {
+                uri = "amqp://guest:guest@localhost:5672"
+                connectionName = "guest"
+            }
+
+            channel("direct-calls"){
+                basicPublish("test", "test-routing-key", null, "fdsf".toByteArray())
+            }
 
             // declare dead letter queue
             queueBind {
@@ -76,6 +100,15 @@ class PluginTesting {
                     }
                 }
             }
+            /* channels will be terminated after task completion */
+            connection("intensive", autoClose = false) {
+                channel {
+                    messageCount { queue = "test-queue" }
+                }
+                channel { }
+            }
+            channel("intensive", autoClose = true) {}
+
 
             val deliveredMessages = mutableListOf<Message>()
             val dlqMessages = mutableListOf<Message>()
