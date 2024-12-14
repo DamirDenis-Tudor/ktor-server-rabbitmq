@@ -5,20 +5,17 @@ val ktorVersion: String by project
 val kotlinVersion: String by project
 val logbackVersion: String by project
 val rabbitmqVersion: String by project
+val kotlinxVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.1.0"
-    id("application")
+    kotlin("plugin.serialization") version "2.1.0"
     id("maven-publish")
     id("signing")
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: ""
-
-application {
-    mainClass.set("com.mesh.ApplicationKt")
-}
+version = project.findProperty("releaseVersion") ?: "0.1.1"
 
 repositories {
     mavenCentral()
@@ -27,6 +24,9 @@ repositories {
 dependencies {
     // ktor
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+
+    //serializing
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
 
     // rabbitmq
     implementation("com.rabbitmq:amqp-client:$rabbitmqVersion")
@@ -88,13 +88,12 @@ publishing {
         maven{
             url = uri("$projectDir/build/publish")
         }
+        mavenLocal()
     }
 }
 
-
-
 signing {
-    sign(publishing.publications["kotlin"])
+    //sign(publishing.publications["kotlin"])
 }
 
 tasks.register<Zip>("zipBuildFolder") {
