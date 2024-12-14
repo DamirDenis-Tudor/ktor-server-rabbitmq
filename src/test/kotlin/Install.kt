@@ -1,10 +1,9 @@
 import com.mesh.kabbitMq.KabbitMQ
-import com.mesh.kabbitMq.dsl.*
+import com.mesh.kabbitMq.dsl.extensions.*
 import com.rabbitmq.client.BuiltinExchangeType
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import java.lang.Thread.sleep
 import kotlin.test.BeforeTest

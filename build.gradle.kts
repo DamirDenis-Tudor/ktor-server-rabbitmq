@@ -10,17 +10,12 @@ val kotlinxVersion: String by project
 plugins {
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.serialization") version "2.1.0"
-    id("application")
     id("maven-publish")
     id("signing")
 }
 
 group = "io.github.damirdenis-tudor"
 version = project.findProperty("releaseVersion") ?: "0.1.1"
-
-application {
-    mainClass.set("com.mesh.ApplicationKt")
-}
 
 repositories {
     mavenCentral()

@@ -1,31 +1,34 @@
-package com.mesh.kabbitMq.builders.channel
+package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
-import com.mesh.kabbitMq.util.StateDelegator
-import com.mesh.kabbitMq.util.StateDelegator.Companion.withThisRef
+import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.*
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.ApiStatus.Internal
 
 @KabbitMQDslMarker
 class KabbitMQBasicConsumeBuilder(
     private val channel: Channel,
 ) {
 
-    var noLocal: Boolean = false
-    var exclusive: Boolean = false
-    var arguments: Map<String, Any> = emptyMap()
+    var noLocal: Boolean by Delegator()
+    var exclusive: Boolean by Delegator()
+    var arguments: Map<String, Any> by Delegator()
 
-    var autoAck: Boolean by StateDelegator()
-    var queue: String by StateDelegator()
-    var consumerTag: String by StateDelegator()
+    var autoAck: Boolean by Delegator()
+    var queue: String by Delegator()
+    var consumerTag: String by Delegator()
 
-    var deliverCallback: DeliverCallback by StateDelegator()
-    private var cancelCallback: CancelCallback by StateDelegator()
-    private var shutdownSignalCallback: ConsumerShutdownSignalCallback by StateDelegator()
+    var deliverCallback: DeliverCallback by Delegator()
+    private var cancelCallback: CancelCallback by Delegator()
+    private var shutdownSignalCallback: ConsumerShutdownSignalCallback by Delegator()
 
 
     init {
+        noLocal = false
+        exclusive = false
+        arguments = emptyMap()
+
         cancelCallback { tag ->
             println("Consumer with tag: $tag cancelled")
         }

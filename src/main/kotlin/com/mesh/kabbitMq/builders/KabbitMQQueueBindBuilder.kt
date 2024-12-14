@@ -1,16 +1,16 @@
-package com.mesh.kabbitMq.builders.channel
+package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
-import com.mesh.kabbitMq.util.StateDelegator
-import com.mesh.kabbitMq.util.StateDelegator.Companion.withThisRef
+import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.Channel
 
 @KabbitMQDslMarker
 class KabbitMQQueueBindBuilder(private val channel: Channel) {
-    var queue: String by StateDelegator()
-    var exchange: String by StateDelegator()
-    var routingKey: String by StateDelegator()
-    var arguments: Map<String, Any> by StateDelegator()
+    var queue: String by Delegator()
+    var exchange: String by Delegator()
+    var routingKey: String by Delegator()
+    var arguments: Map<String, Any> by Delegator()
 
     init {
         routingKey = ""

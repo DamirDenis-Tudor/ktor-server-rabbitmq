@@ -1,15 +1,16 @@
-package com.mesh.kabbitMq.builders.channel
+package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
-import com.mesh.kabbitMq.util.StateDelegator
-import com.mesh.kabbitMq.util.StateDelegator.Companion.withThisRef
+import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.Channel
+
 
 @KabbitMQDslMarker
 class KabbitMQBasicQosBuilder(private val channel: Channel) {
-    var prefetchSize: Int by StateDelegator()
-    var prefetchCount: Int by StateDelegator()
-    var global: Boolean by StateDelegator()
+    var prefetchSize: Int by Delegator()
+    var prefetchCount: Int by Delegator()
+    var global: Boolean by Delegator()
 
     fun build() {
         withThisRef(this@KabbitMQBasicQosBuilder){
