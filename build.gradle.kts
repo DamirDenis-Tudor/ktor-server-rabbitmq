@@ -93,7 +93,7 @@ publishing {
 }
 
 signing {
-    //sign(publishing.publications["kotlin"])
+    sign(publishing.publications["kotlin"])
 }
 
 tasks.register<Zip>("zipBuildFolder") {
