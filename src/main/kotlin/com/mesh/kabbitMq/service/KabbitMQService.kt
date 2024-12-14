@@ -18,6 +18,13 @@ class KabbitMQService(private val config: KabbitMQConfig) {
     fun getConnection(id: String = "DEFAULT") =
         connectionCache.getOrPut(id) { connectionFactory.newConnection() }
 
-    fun close(connectionId: String) =
+    fun closeConnection(connectionId: String) {
         connectionCache[connectionId]?.close()
+        connectionCache.remove(connectionId)
+    }
+
+    fun closeChannel(channelId: String) {
+        channelCache[channelId]?.close()
+        channelCache.remove(channelId)
+    }
 }

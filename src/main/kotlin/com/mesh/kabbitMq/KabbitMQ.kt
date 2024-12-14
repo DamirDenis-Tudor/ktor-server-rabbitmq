@@ -7,10 +7,12 @@ import io.ktor.util.*
 
 val KabbitMQServiceKey = AttributeKey<KabbitMQService>("KabbitMQService")
 
-val KabbitMQ = createApplicationPlugin("KabbitMQ", ::KabbitMQConfig) {
+val KabbitMQ = createApplicationPlugin(
+    name = "KabbitMQ",
+    configurationPath = "rabbitmq",
+    createConfiguration = ::KabbitMQConfig
+) {
     with( KabbitMQService(pluginConfig)){
         application.attributes.put(KabbitMQServiceKey, this)
-        application.monitor.subscribe(ApplicationStopping) { //close() }
-        }
     }
 }
