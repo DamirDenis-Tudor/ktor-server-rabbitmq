@@ -1,15 +1,15 @@
-package com.mesh.kabbitMq.builders.channel
+package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
-import com.mesh.kabbitMq.util.StateDelegator
-import com.mesh.kabbitMq.util.StateDelegator.Companion.withThisRef
+import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.Channel
 
 @KabbitMQDslMarker
 class KabbitMQQueueDeleteBuilder(private val channel: Channel) {
-    var queue: String by StateDelegator()
-    var ifUnused: Boolean by StateDelegator()
-    var ifEmpty: Boolean by StateDelegator()
+    var queue: String by Delegator()
+    var ifUnused: Boolean by Delegator()
+    var ifEmpty: Boolean by Delegator()
 
     fun build() {
         withThisRef(this@KabbitMQQueueDeleteBuilder){
