@@ -5,9 +5,11 @@ val ktorVersion: String by project
 val kotlinVersion: String by project
 val logbackVersion: String by project
 val rabbitmqVersion: String by project
+val kotlinxVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
     id("application")
     id("maven-publish")
     id("signing")
@@ -27,6 +29,9 @@ repositories {
 dependencies {
     // ktor
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+
+    //serializing
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
 
     // rabbitmq
     implementation("com.rabbitmq:amqp-client:$rabbitmqVersion")
@@ -90,8 +95,6 @@ publishing {
         }
     }
 }
-
-
 
 signing {
     sign(publishing.publications["kotlin"])

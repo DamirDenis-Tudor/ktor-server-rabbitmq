@@ -13,7 +13,7 @@ class StateDelegator<T : Any>(
 ) {
     companion object {
         private val stateMap = mutableMapOf<Pair<String, String>, State<Any>>()
-        lateinit var ref: Any
+        private lateinit var ref: Any
 
         fun initialized(vararg properties: KProperty<*>, thisRef: Any = ref): Boolean {
             return properties.all {
@@ -27,9 +27,10 @@ class StateDelegator<T : Any>(
             }
         }
 
-        fun withThisRef(ref: Any, block: StateDelegator.Companion.() -> Unit) {
+        fun withThisRef(ref: Any, block: Companion.() -> Unit) {
             this.ref = ref
             this.apply(block)
+            this.ref = Any()
         }
     }
 
