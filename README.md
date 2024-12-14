@@ -5,7 +5,6 @@
 - `kabbitmq` is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the `com.rabbitmq:amqp-client` library. It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.
 
 
-
 ### Gradle (Kotlin DSL) - dependencies
 
 ```kotlin
