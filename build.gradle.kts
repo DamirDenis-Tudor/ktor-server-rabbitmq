@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: ""
+version = project.findProperty("releaseVersion") ?: "0.1.1"
 
 application {
     mainClass.set("com.mesh.ApplicationKt")
@@ -93,11 +93,12 @@ publishing {
         maven{
             url = uri("$projectDir/build/publish")
         }
+        mavenLocal()
     }
 }
 
 signing {
-    sign(publishing.publications["kotlin"])
+    //sign(publishing.publications["kotlin"])
 }
 
 tasks.register<Zip>("zipBuildFolder") {

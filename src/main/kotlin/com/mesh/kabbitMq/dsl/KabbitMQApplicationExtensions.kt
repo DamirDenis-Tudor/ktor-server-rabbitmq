@@ -7,14 +7,20 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.ktor.server.application.*
+import io.ktor.websocket.*
 
 @KabbitMQDslMarker
-inline fun Application.connection(id: String, block: Connection.() -> Unit) =
-    attributes[KabbitMQServiceKey].getConnection(id).apply(block)
+inline fun Application.connection(id: String,autoClose: Boolean = true, block: Connection.() -> Unit) =
+    attributes[KabbitMQServiceKey].getConnection(id).apply(block).apply{
+        if (autoClose) attributes[KabbitMQServiceKey].closeConnection(id)
+    }
 
 @KabbitMQDslMarker
-inline fun Application.channel(id: String, block: Channel.() -> Unit) =
-    attributes[KabbitMQServiceKey].getChannel(id).apply(block)
+inline fun Application.channel(id: String, autoClose: Boolean = true, block: Channel.() -> Unit): Channel {
+    return attributes[KabbitMQServiceKey].getChannel(id).apply(block).apply{
+        if (autoClose) attributes[KabbitMQServiceKey].closeChannel(id)
+    }
+}
 
 @KabbitMQDslMarker
 inline fun Application.basicAck(block: KabbitMQBasicAckBuilder.() -> Unit) =
@@ -29,7 +35,7 @@ inline fun Application.exchangeDelete(block: KabbitMQExchangeDeleteBuilder.() ->
     KabbitMQExchangeDeleteBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
 
 @KabbitMQDslMarker
-inline fun Application.queueDeclare(block: KabbitMQQueueDeclareBuilder.() -> Unit): AMQP.Queue.DeclareOk =
+inline fun Application.queueDeclare(block: KabbitMQQueueDeclareBuilder.() -> Unit) =
     KabbitMQQueueDeclareBuilder(attributes[KabbitMQServiceKey].getChannel()).apply(block).build()
 
 @KabbitMQDslMarker

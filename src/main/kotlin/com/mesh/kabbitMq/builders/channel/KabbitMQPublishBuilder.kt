@@ -23,6 +23,11 @@ class KabbitMQPublishBuilder(
     var immediate: Boolean by StateDelegator()
     var properties by StateDelegator(State.Initialized(AMQP.BasicProperties()))
 
+
+    init {
+        routingKey = ""
+    }
+
     @KabbitMQDslMarker
     inline fun <reified T> message(block: () -> T) {
         message = Json.encodeToString(block()).toByteArray(Charsets.UTF_8)

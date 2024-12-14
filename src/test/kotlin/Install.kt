@@ -2,119 +2,114 @@ import com.mesh.kabbitMq.KabbitMQ
 import com.mesh.kabbitMq.dsl.*
 import com.rabbitmq.client.BuiltinExchangeType
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
+import java.lang.Thread.sleep
+import kotlin.test.BeforeTest
 import kotlin.test.Test
-
-private fun Application.installModule() {
-    install(KabbitMQ) {
-        uri = "amqp://guest:guest@localhost:5672"
-        connectionName = "localhost"
-    }
-}
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Serializable
 data class Message(
-    var text: String = "fdsfsd",
-    var mama: String = "aaaaa"
+    var content: String
+)
+
+@Serializable
+data class Envelope(
+    var id: String,
+    var message: Message
 )
 
 class PluginTesting {
 
-    @Test
-    fun testInstall() = runBlocking {
-        runTestApplication {
-            application {
-                installModule()
-
-                repeat(10) {
-                    basicPublish {
-                        exchange = "test_exchange"
-                        routingKey = "test_routing_key"
-                        message{
-                            Message("Test", "Test")
-                        }
-                    }
-                }
-
-                messageCount {
-                    queue = "test_queue"
-                }.let(::println)
-
-                basicConsume {
-                    queue = "test_queue"
-                    deliverCallback<Message>{ tag, message ->
-                        println("$tag: $message")
-                    }
-                    cancelCallback { tag ->
-                       println(tag)
-                    }
-                }
-            }
+    @BeforeTest
+    fun config() = testApplication {
+        environment {
+            config = ApplicationConfig("application.conf")
         }
     }
 
     @Test
-    fun testInstall1() = runBlocking {
-        runTestApplication {
-            application {
-                installModule()
+    fun testInstall() = testApplication {
+        application {
+            install(KabbitMQ)
 
-                repeat(10) {
-                    basicPublish {
-                        exchange = "test_exchange"
-                        routingKey = "test_routing_key"
-                        message = "".toByteArray()
-                    }
-                }
-
-                channel("test") {
-                    basicConsume {
-                        consumerTag = "cancel"
-                        queue = "test_queue"
-                        deliverCallback<Message> { _, message ->
-                            println("Consummmerrrrrrrr")
-                            message.let(::println)
-                        }
-                        cancelCallback { _ ->
-                            println("cancelled")
-                        }
-                    }
-
-                    basicCancel("cancel")
-                    close()
-                }
-
-
-                channel("test1") {
-                }
-
-
-                exchangeDeclare {
-                    exchange = "dead-letter-exchange"
-                    type = BuiltinExchangeType.DIRECT
-                    durable = true
-                    autoDelete = true
-                    arguments = mapOf()
-                }
-
+            // declare dead letter queue
+            queueBind {
+                queue = "dlq"
+                exchange = "dlx"
+                routingKey = "dlq-dlx"
                 queueDeclare {
-                    queue = "dead-letter-queue"
+                    queue = "dlq"
                     durable = true
-                    arguments = mapOf()
                 }
+                exchangeDeclare {
+                    exchange = "dlx"
+                    type = BuiltinExchangeType.DIRECT
+                }
+            }
 
-                queueBind {
-                    queue = "dead-letter-queue"
-                    routingKey = "routing-key"
-                    exchange = "dead-letter-exchange"
+            // declare queue configured with dead letter queue
+            queueBind {
+                queue = "test-queue"
+                exchange = "test-exchange"
+                queueDeclare {
+                    queue = "test-queue"
+                    arguments = mapOf(
+                        "x-dead-letter-exchange" to "dlx",
+                        "x-dead-letter-routing-key" to "dlq-dlx"
+                    )
                 }
+                exchangeDeclare {
+                    exchange = "test-exchange"
+                    type = BuiltinExchangeType.FANOUT
+                }
+            }
 
-                while (true) {
+            repeat(10) {
+                basicPublish {
+                    exchange = "test-exchange"
+                    message {
+                        Message(content = "Hello world!")
+                    }
                 }
+            }
+
+            val deliveredMessages = mutableListOf<Message>()
+            val dlqMessages = mutableListOf<Message>()
+
+            basicConsume {
+                queue = "test-queue"
+                autoAck = false
+                deliverCallback<Message> { tag, message ->
+                    deliveredMessages.add(message)
+                    basicReject {
+                        deliveryTag = tag
+                        requeue = false
+                    }
+                }
+            }
+
+            basicConsume {
+                queue = "dlq"
+                autoAck = true
+                deliverCallback<Message> { _, message ->
+                    dlqMessages.add(message)
+                    println("Message in DLQ: $message")
+                }
+            }
+
+            sleep(1000)
+
+            assertEquals(10, deliveredMessages.size, "Expected 10 messages to be delivered to the test-queue.")
+            assertEquals(10, dlqMessages.size, "Expected 10 messages to be in the DLQ after being rejected.")
+
+            dlqMessages.forEach { message ->
+                assertTrue(message.content.contains("Hello world!"), "Message in DLQ should contain 'Hello world!'")
             }
         }
     }
 }
-

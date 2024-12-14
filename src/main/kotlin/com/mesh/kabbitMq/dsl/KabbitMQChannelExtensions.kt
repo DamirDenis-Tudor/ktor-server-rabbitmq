@@ -11,6 +11,11 @@ inline fun Connection.channel(block: Channel.() -> Unit): Channel {
 }
 
 @KabbitMQDslMarker
+inline fun Connection.channel(id: String, block: Channel.() -> Unit): Channel {
+    return this.createChannel().also(block)
+}
+
+@KabbitMQDslMarker
 inline fun Channel.basicConsume(block: KabbitMQBasicConsumeBuilder.() -> Unit) =
     KabbitMQBasicConsumeBuilder(this).apply(block).build()
 
@@ -27,7 +32,7 @@ inline fun Channel.exchangeDelete(block: KabbitMQExchangeDeleteBuilder.() -> Uni
     KabbitMQExchangeDeleteBuilder(this).apply(block).build()
 
 @KabbitMQDslMarker
-inline fun Channel.queueDeclare(block: KabbitMQQueueDeclareBuilder.() -> Unit): AMQP.Queue.DeclareOk =
+inline fun Channel.queueDeclare(block: KabbitMQQueueDeclareBuilder.() -> Unit) =
     KabbitMQQueueDeclareBuilder(this).apply(block).build()
 
 @KabbitMQDslMarker
