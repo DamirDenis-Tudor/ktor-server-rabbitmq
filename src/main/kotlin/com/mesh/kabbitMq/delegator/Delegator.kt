@@ -47,7 +47,7 @@ internal class Delegator<T : Any>{
         fun stateTrace(thisRef: Any = ref): List<String> {
             return thisRef::class.memberProperties.map {
                 val initialized = (stateMap[thisRef.javaClass.simpleName to it.name] is State.Initialized)
-                "${thisRef.javaClass.simpleName}: <${it.name}>, initialized: <$initialized>"
+                "<${it.name}>, initialized: <$initialized>"
             }
         }
 
