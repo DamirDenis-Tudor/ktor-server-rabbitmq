@@ -71,9 +71,8 @@ connection(
 
 ```kotlin
 /* 
- * In RabbitMQ client you have overloaded functions and in order to maintain compatibility 
- * with DSL style a mechanism for parameter validation is required.
- * The core of this mechanism is a custom state delegator mechanism.
+ * In com.rabbitmq:amqp-client you have overloaded functions and in order to maintain compatibility with DSL style
+ * a mechanism for parameter validation is required. The core of this mechanism is a custom state delegator mechanism.
  */
 
 basicConsume {
