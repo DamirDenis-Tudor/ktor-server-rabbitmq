@@ -2,7 +2,7 @@
 
 ## Overview
 
-- `kabbitmq` is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the Java RabbitMQ Client library. It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.
+- `kabbitmq` is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the `com.rabbitmq:amqp-client` library. It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.
 
 
 
@@ -27,7 +27,7 @@ install(KabbitMQ) {
 - DSL wrapper for almost all the functionalities with parameter validation. 
 - Channel & Connection management mechanism.
 - Built in message serialization and deserialization.
-- Possibility to interact directly with Java RabbitMQ Client Library.
+- Possibility to interact directly with `com.rabbitmq:amqp-client`.
 
 ### Samples
 
