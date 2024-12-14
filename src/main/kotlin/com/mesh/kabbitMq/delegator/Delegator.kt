@@ -57,10 +57,14 @@ internal class Delegator<T : Any>{
          * @param ref the reference to the current object.
          * @param block the block of code to execute with the companion object.
          */
-        fun withThisRef(ref: Any, block: Companion.() -> Unit) {
+        fun <T : Any> withThisRef(ref: Any, block: () -> T): T {
             this.ref = ref
-            this.apply(block)
+
+            val result = block.invoke()
+
             this.ref = Any()
+
+            return result
         }
     }
 

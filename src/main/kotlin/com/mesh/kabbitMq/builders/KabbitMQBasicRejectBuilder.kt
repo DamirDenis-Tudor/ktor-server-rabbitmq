@@ -14,7 +14,5 @@ class KabbitMQBasicRejectBuilder(private val channel: Channel) {
         requeue = false
     }
 
-    fun build() {
-        channel.basicReject(deliveryTag, requeue)
-    }
+    fun build() = channel.basicReject(deliveryTag, requeue)
 }

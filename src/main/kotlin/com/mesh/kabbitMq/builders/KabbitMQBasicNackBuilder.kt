@@ -15,7 +15,6 @@ class KabbitMQBasicNackBuilder(private val channel: Channel) {
         requeue = false
     }
 
-    fun build() {
-        channel.basicNack(deliveryTag, multiple, requeue)
-    }
+    fun build() = channel.basicNack(deliveryTag, multiple, requeue)
+
 }
