@@ -39,12 +39,50 @@ class PluginTesting {
                 connectionName = "guest"
             }
 
-            basicConsume {
-                queue = "test-queue"
-                deliverCallback<String> { _, _ ->
+            channel("expensive", autoClose = true) {
+                queueBind {
+                    queueDeclare {
+                        queue = "test"
+                        durable = true
+                    }
+                    exchangeDeclare {
+                        exchange = "test-x"
+                        type = BuiltinExchangeType.DIRECT
+                    }
+                    exchange = "test-x"
+                    queue = "test"
+                    routingKey = "test-routing"
+                }
 
+                basicPublish {
+                    exchange = "test-x"
+                    routingKey = "test-routing"
+                    message {
+                        Envelope("", Message("fds"))
+                    }
+                }
+
+                basicConsume {
+                    queue = "test"
+                    deliverCallback<Envelope> { tag, message ->
+                        println(message)
+                        basicReject {
+                            deliveryTag = tag
+                        }
+                    }
+                    cancelCallback {  }
                 }
             }
+
+
+
+            connection("expensive", autoClose = false){
+                channel {
+                    println()
+                }
+            }
+
+
         }
     }
 

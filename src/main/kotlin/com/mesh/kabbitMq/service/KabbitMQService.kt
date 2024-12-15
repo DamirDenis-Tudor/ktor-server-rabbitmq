@@ -14,7 +14,9 @@ import com.rabbitmq.client.ConnectionFactory
  * @version 0.1.0
  */
 class KabbitMQService(private val config: KabbitMQConfig) {
-    private val connectionFactory = ConnectionFactory().apply { setUri(config.uri) }
+    private val connectionFactory = ConnectionFactory().apply {
+        setUri(config.uri)
+    }
 
     private val connectionCache = mutableMapOf<String, Connection>()
     private val channelCache = mutableMapOf<String, Channel>()

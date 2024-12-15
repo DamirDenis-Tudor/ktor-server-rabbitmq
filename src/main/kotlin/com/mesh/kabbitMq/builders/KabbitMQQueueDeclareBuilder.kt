@@ -24,9 +24,10 @@ class KabbitMQQueueDeclareBuilder(private val channel: Channel) {
 
     fun build(): AMQP.Queue.DeclareOk = withThisRef(this@KabbitMQQueueDeclareBuilder) {
         return@withThisRef when {
-            initialized(::queue) -> {
+            initialized(::queue, ::durable, ::exclusive, ::autoDelete, ::arguments) -> {
                 channel.queueDeclare(queue, durable, exclusive, autoDelete, arguments)
             }
+
             else -> {
                 channel.queueDeclare()
             }
