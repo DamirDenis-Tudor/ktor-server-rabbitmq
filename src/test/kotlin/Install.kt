@@ -39,7 +39,7 @@ class PluginTesting {
                 connectionName = "guest"
             }
 
-            channel("expensive", autoClose = true) {
+            channel(1, autoClose = true) {
                 queueBind {
                     queueDeclare {
                         queue = "test"
@@ -64,7 +64,6 @@ class PluginTesting {
 
                 basicConsume {
                     queue = "test"
-                    autoAck = true
                     deliverCallback<Envelope> { tag, message ->
                         println(message)
                     }
@@ -72,15 +71,11 @@ class PluginTesting {
                 }
             }
 
-
-
             connection("expensive", autoClose = false){
                 channel {
-                    println()
+
                 }
             }
-
-
         }
     }
 
@@ -92,7 +87,7 @@ class PluginTesting {
                 connectionName = "guest"
             }
 
-            channel("direct-calls"){
+            channel(1){
                 basicPublish("test", "test-routing-key", null, "fdsf".toByteArray())
             }
 
@@ -143,7 +138,7 @@ class PluginTesting {
                 }
                 channel { }
             }
-            channel("intensive", autoClose = true) {}
+            channel(1, autoClose = true) {}
 
 
             val deliveredMessages = mutableListOf<Message>()

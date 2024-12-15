@@ -13,7 +13,7 @@ inline fun Application.connection(id: String, autoClose: Boolean = true, block: 
     }
 
 @KabbitMQDslMarker
-inline fun Application.channel(id: String, autoClose: Boolean = true, block: Channel.() -> Unit): Channel {
+inline fun Application.channel(id: Int, autoClose: Boolean = true, block: Channel.() -> Unit): Channel {
     return attributes[KabbitMQServiceKey].getChannel(id).apply(block).apply{
         if (autoClose) attributes[KabbitMQServiceKey].closeChannel(id)
     }

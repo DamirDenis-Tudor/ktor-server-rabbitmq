@@ -66,7 +66,7 @@ internal class Delegator<T : Any>{
          */
         fun reportStateTrace(thisRef: Any = ref): String {
             stateTrace().forEach {
-                KtorSimpleLogger(thisRef.javaClass.simpleName).debug(it)
+                KtorSimpleLogger("io.kabbitmq.${thisRef.javaClass.simpleName}").debug(it)
             }
             return "Unsupported combination of parameters for ${thisRef.javaClass.simpleName}."
         }
@@ -78,6 +78,9 @@ internal class Delegator<T : Any>{
          * @param block the block of code to execute with the companion object.
          */
         fun <T : Any> withThisRef(ref: Any, block: () -> T): T {
+            KtorSimpleLogger("io.kabbitmq.${ref.javaClass.simpleName}")
+                .debug("Build method for method called.")
+
             this.ref = ref
 
             val result = block.invoke()
