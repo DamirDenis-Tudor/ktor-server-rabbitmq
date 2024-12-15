@@ -1,13 +1,12 @@
 package com.mesh.kabbitMq.builders
 
-import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
 import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
-import com.mesh.kabbitMq.delegator.Delegator.Companion.stateTrace
+import com.mesh.kabbitMq.delegator.Delegator.Companion.reportStateTrace
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
-import io.ktor.util.logging.*
 
 @KabbitMQDslMarker
 class KabbitMQQueueDeleteBuilder(private val channel: Channel) {
@@ -25,10 +24,7 @@ class KabbitMQQueueDeleteBuilder(private val channel: Channel) {
                 channel.queueDelete(queue)
             }
 
-            else -> {
-                stateTrace().forEach { KtorSimpleLogger("KabbitMQQueueDeleteBuilder").warn(it) }
-                error("Unsupported combination of parameters for basicConsume.")
-            }
+            else -> error(reportStateTrace())
         }
     }
 }
