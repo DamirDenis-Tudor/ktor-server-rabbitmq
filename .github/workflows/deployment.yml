@@ -31,7 +31,7 @@ jobs:
         run: |
           existingDescription=$(gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q '.body')
           
-          newDescription='[Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/${{ github.event.repository.name }}/${{ github.event.release.tag_name }})'
+          newDescription='[Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/kabbitmq/${{ github.event.release.tag_name }})'
 
           updatedDescription="${newDescription} : ${existingDescription}"
 

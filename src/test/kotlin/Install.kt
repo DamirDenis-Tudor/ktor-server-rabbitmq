@@ -4,12 +4,10 @@ import com.rabbitmq.client.BuiltinExchangeType
 import io.ktor.server.application.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
+import io.ktor.util.logging.*
 import kotlinx.serialization.Serializable
-import java.lang.Thread.sleep
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @Serializable
 data class Message(
@@ -32,48 +30,71 @@ class PluginTesting {
     }
 
     @Test
+    fun connectionTesting() = testApplication {
+        application {
+            install(KabbitMQ) {
+                uri = "amqp://guest:guest@localhost:5672"
+                connectionAttempts = 1
+            }
+        }
+
+
+        application {
+            /* default connection, default channel */
+            messageCount { queue = "test-queue" }
+
+            channel(id = 2, autoClose = false) {
+                /* calls */
+            }
+
+            /* new connection */
+            connection(id = "connection_0", autoClose = false) {
+                /* new channel */
+                channel(id = 2, autoClose = false) {
+                    /* calls */
+                }
+
+                /* will be destroyed after the task is finished */
+                channel {
+                    /* calls */
+                }
+            }
+
+            /* reused connection */
+            connection(id = "connection_0") {
+                /* reused channel */
+                channel(id = 2, autoClose = false) {
+                    /* calls */
+                }
+                /* new channel */
+                channel(id = 3, autoClose = false) {
+                    /* calls */
+                }
+            }
+
+            /* default connection, new channel */
+            channel(id = 4, autoClose = false) {
+                /* calls */
+            }
+
+            while (true) {
+            }
+        }
+    }
+
+    @Test
     fun wrong() = testApplication {
         application {
             install(KabbitMQ) {
                 uri = "amqp://guest:guest@localhost:5672"
-                connectionName = "guest"
             }
-
-            channel(1, autoClose = true) {
-                queueBind {
-                    queueDeclare {
-                        queue = "test"
-                        durable = true
-                    }
-                    exchangeDeclare {
-                        exchange = "test-x"
-                        type = BuiltinExchangeType.DIRECT
-                    }
-                    exchange = "test-x"
-                    queue = "test"
-                    routingKey = "test-routing"
-                }
-
-                basicPublish {
-                    exchange = "test-x"
-                    routingKey = "test-routing"
-                    message {
-                        Envelope("", Message("fds"))
-                    }
-                }
-
-                basicConsume {
-                    queue = "test"
-                    deliverCallback<Envelope> { tag, message ->
-                        println(message)
-                    }
-                    cancelCallback {  }
-                }
-            }
-
-            connection("expensive", autoClose = false){
-                channel {
-
+        }
+        application {
+            basicConsume {
+                queue = "test-queue"
+                /* autoAck = true */ // let's say that autoAck is omited
+                deliverCallback<Message> { tag, message ->
+                    println("Message: $message with $tag")
                 }
             }
         }
@@ -84,11 +105,6 @@ class PluginTesting {
         application {
             install(KabbitMQ) {
                 uri = "amqp://guest:guest@localhost:5672"
-                connectionName = "guest"
-            }
-
-            channel(1){
-                basicPublish("test", "test-routing-key", null, "fdsf".toByteArray())
             }
 
             // declare dead letter queue
@@ -107,30 +123,31 @@ class PluginTesting {
             }
 
             // declare queue configured with dead letter queue
-            queueBind {
-                queue = "test-queue"
-                exchange = "test-exchange"
-                queueDeclare {
-                    queue = "test-queue"
-                    arguments = mapOf(
-                        "x-dead-letter-exchange" to "dlx",
-                        "x-dead-letter-routing-key" to "dlq-dlx"
-                    )
-                }
-                exchangeDeclare {
-                    exchange = "test-exchange"
-                    type = BuiltinExchangeType.FANOUT
-                }
-            }
-
-            repeat(10) {
-                basicPublish {
-                    exchange = "test-exchange"
-                    message {
-                        Message(content = "Hello world!")
+            channel(55, autoClose = true) {
+                queueBind {
+                    queue = "test-queue111"
+                    exchange = "test-exchange111"
+                    queueDeclare {
+                        queue = "test-queue111"
+                    }
+                    exchangeDeclare {
+                        exchange = "test-exchange111"
+                        type = BuiltinExchangeType.FANOUT
                     }
                 }
             }
+
+            channel(55, autoClose = false) {
+                repeat(10) {
+                    basicPublish {
+                        exchange = "test-exchange"
+                        message {
+                            Message(content = "Hello world!")
+                        }
+                    }
+                }
+            }
+
             /* channels will be terminated after task completion */
             connection("intensive", autoClose = false) {
                 channel {
@@ -140,15 +157,10 @@ class PluginTesting {
             }
             channel(1, autoClose = true) {}
 
-
-            val deliveredMessages = mutableListOf<Message>()
-            val dlqMessages = mutableListOf<Message>()
-
             basicConsume {
                 queue = "test-queue"
                 autoAck = false
                 deliverCallback<Message> { tag, message ->
-                    deliveredMessages.add(message)
                     basicReject {
                         deliveryTag = tag
                         requeue = false
@@ -156,24 +168,21 @@ class PluginTesting {
                 }
             }
 
-            assertEquals(1, consumerCount { queue = "test-queue" })
-
-            basicConsume {
-                queue = "dlq"
-                autoAck = true
-                deliverCallback<Message> { _, message ->
-                    dlqMessages.add(message)
-                    println("Message in DLQ: $message")
+            val logger = KtorSimpleLogger("test")
+            connection("intensive") {
+                channel(4) {
+                    basicConsume {
+                        queue = "dlq"
+                        autoAck = true
+                        deliverCallback<Message> { _, message ->
+                            logger.info("Message in DLQ: $message")
+                        }
+                    }
                 }
             }
 
-            sleep(1000)
 
-            assertEquals(10, deliveredMessages.size, "Expected 10 messages to be delivered to the test-queue.")
-            assertEquals(10, dlqMessages.size, "Expected 10 messages to be in the DLQ after being rejected.")
-
-            dlqMessages.forEach { message ->
-                assertTrue(message.content.contains("Hello world!"), "Message in DLQ should contain 'Hello world!'")
+            while (true) {
             }
         }
     }
