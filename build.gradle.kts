@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: "0.1.1"
+version = project.findProperty("releaseVersion") ?: "0.3.5"
 
 repositories {
     mavenCentral()
@@ -29,7 +29,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
 
     // rabbitmq
-    implementation("com.rabbitmq:amqp-client:$rabbitmqVersion")
+    api("com.rabbitmq:amqp-client:$rabbitmqVersion")
 
     // logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
