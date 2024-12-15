@@ -62,12 +62,12 @@ publishing {
                             "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n"
                 )
 
-                url.set("https://github.com/DamirDenis-Tudor/kabbitmq")
+                url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
 
                 scm {
-                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/kabbitmq.git")
-                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/kabbitmq.git")
-                    url.set("https://github.com/DamirDenis-Tudor/kabbitmq")
+                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/KabbitMQ.git")
+                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/KabbitMQ.git")
+                    url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
                 }
 
                 licenses {
