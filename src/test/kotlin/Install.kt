@@ -64,11 +64,9 @@ class PluginTesting {
 
                 basicConsume {
                     queue = "test"
+                    autoAck = true
                     deliverCallback<Envelope> { tag, message ->
                         println(message)
-                        basicReject {
-                            deliveryTag = tag
-                        }
                     }
                     cancelCallback {  }
                 }

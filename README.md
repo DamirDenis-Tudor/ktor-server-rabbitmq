@@ -1,4 +1,4 @@
-# ![KabbitMQ](https://github.com/user-attachments/assets/1fcc4641-1c1f-44c7-a929-6de86210303c)abbitMQ
+# ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ
 
 ## Overview
 
