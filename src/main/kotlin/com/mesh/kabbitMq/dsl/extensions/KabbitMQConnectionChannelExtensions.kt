@@ -2,29 +2,41 @@ package com.mesh.kabbitMq.dsl.extensions
 
 import com.mesh.kabbitMq.KabbitMQServiceKey
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
+import com.mesh.kabbitMq.service.KabbitMQConfig
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.ktor.server.application.*
+import kotlin.random.Random
 
 @KabbitMQDslMarker
-inline fun Application.connection(id: String, autoClose: Boolean = true, block: Connection.() -> Unit) =
-    attributes[KabbitMQServiceKey].getConnection(id).apply(block).apply{
-        if (autoClose) attributes[KabbitMQServiceKey].closeConnection(id)
-    }
+inline fun Application.connection(id: String, autoClose: Boolean = false, block: Connection.() -> Unit) =
+    attributes[KabbitMQServiceKey]
+        .getConnection(id)
+        .apply(block)
+        .apply { if (autoClose) attributes[KabbitMQServiceKey].closeConnection(id) }
 
 @KabbitMQDslMarker
-inline fun Application.channel(id: Int, autoClose: Boolean = true, block: Channel.() -> Unit): Channel {
-    return attributes[KabbitMQServiceKey].getChannel(id).apply(block).apply{
-        if (autoClose) attributes[KabbitMQServiceKey].closeChannel(id)
-    }
-}
+inline fun Application.channel(id: Int, autoClose: Boolean = false, block: Channel.() -> Unit): Channel =
+    attributes[KabbitMQServiceKey]
+        .getChannel(id)
+        .apply(block)
+        .apply { if (autoClose) attributes[KabbitMQServiceKey].closeChannel(id) }
 
 @KabbitMQDslMarker
 inline fun Connection.channel(block: Channel.() -> Unit): Channel {
-    return this.createChannel().also(block).apply{ this.close() }
+    val connectionId = KabbitMQConfig.service.getConnectionId(this)
+    val channelId = Random.nextInt(100000, 100000000)
+    return createChannel()
+        .apply{ KabbitMQConfig.service.logConnectionChannel(channelId, connectionId) }
+        .also(block)
+        .apply { this.close().run { KabbitMQConfig.service.logChannelClosed(channelId) } }
 }
 
 @KabbitMQDslMarker
-inline fun Connection.channel(id: String, block: Channel.() -> Unit): Channel {
-    return this.createChannel().also(block).apply{ this.close() }
+inline fun Connection.channel(id: Int, autoClose: Boolean = false, block: Channel.() -> Unit): Channel {
+    val connectionId = KabbitMQConfig.service.getConnectionId(this)
+
+    return KabbitMQConfig.service.getChannel(id, connectionId)
+        .also(block)
+        .apply { if (autoClose) KabbitMQConfig.service.closeChannel(id, connectionId) }
 }

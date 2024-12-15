@@ -4,9 +4,9 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import io.ktor.util.logging.*
-import org.slf4j.event.Level
 import java.lang.Thread.sleep
-import java.util.logging.LogManager
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 
 /**
  * Service class that manages RabbitMQ connections and channels.
@@ -19,8 +19,8 @@ import java.util.logging.LogManager
  */
 class KabbitMQService(private val config: KabbitMQConfig) {
     private val connectionFactory = ConnectionFactory().apply { setUri(config.uri) }
-    private val connectionCache = mutableMapOf<String, Connection>()
-    private val channelCache = mutableMapOf<Int, Channel>()
+    private val connectionCache = ConcurrentHashMap<String, Connection>()
+    private val channelCache = ConcurrentHashMap<String, Channel>()
 
     private val logger = KtorSimpleLogger("io.kabbitmq.KabbitMQService")
 
@@ -30,6 +30,8 @@ class KabbitMQService(private val config: KabbitMQConfig) {
         }
     }
 
+    private fun getChannelKey(connectionId: String, channelId: Int): String =
+        "$connectionId-channel-$channelId"
 
     /**
      * Retries a block of code for a specified number of attempts with a delay between retries.
@@ -38,6 +40,7 @@ class KabbitMQService(private val config: KabbitMQConfig) {
      * @return The result of the block if it succeeds.
      * @throws  IllegalStateException if the block fails after the maximum number of retry attempts.
      */
+    @Synchronized
     private fun <T> retry(block: () -> T): T {
         repeat(config.connectionAttempts) { index ->
             runCatching { block() }
@@ -52,53 +55,84 @@ class KabbitMQService(private val config: KabbitMQConfig) {
         error("Failed after ${config.connectionAttempts} retries")
     }
 
+    fun logConnectionChannel(channelId: Int, connectionId: String) =
+        logger.trace("Created new channel with id <$channelId> for connection with id <$connectionId>.")
+
+    fun logChannelClosed(channelId: Int) =
+        logger.trace("Channel with id: <$channelId>, closed")
+
     /**
      * Retrieves a RabbitMQ connection by its ID. If the connection is not cached or is closed, a new one is created.
      *
      * @param id the ID of the connection to retrieve, defaults to "DEFAULT".
      * @return the requested RabbitMQ connection.
      */
-    fun getConnection(id: String = "connection_1"): Connection = retry {
+    @Synchronized
+    fun getConnection(id: String = config.defaultConnectionName): Connection = retry {
+        if (connectionCache.containsKey(id)){
+            logger.trace("Connection with id: <{}> taken from cache.", id)
+        }
+
         val connection = connectionCache.getOrPut(id) {
+            logger.trace("Created new connection with id: <{}>.", id)
             connectionFactory.newConnection(id)
         }
 
         if (!connection.isOpen)
             error("Connection <$id> is not open.")
 
-        logger.debug("Created new connection with id: <{}>.", id)
-
         return@retry connection
     }
 
+    /**
+     * Retrieves the ID of a RabbitMQ connection from the cache.
+     * If the connection is found in the cache, its associated ID is returned.
+     * If not found, the default ID `"default_connection"` is returned.
+     *
+     * @param connection The RabbitMQ connection whose ID is to be retrieved.
+     * @return The ID of the connection, or `"default_connection"` if not found.
+     */
+    @Synchronized
+    fun getConnectionId(connection: Connection): String =
+        connectionCache.entries.find { it.value == connection }?.key ?: config.defaultConnectionName
 
     /**
      * Closes a RabbitMQ connection by its ID and removes it from the connection cache.
      *
      * @param connectionId the ID of the connection to close and remove.
      */
+    @Synchronized
     fun closeConnection(connectionId: String) {
         connectionCache[connectionId]?.close()
         connectionCache.remove(connectionId)
 
-        logger.debug("Connection with id: <{}>, closed", connectionId)
+        logger.trace("Connection with id: <{}>, closed", connectionId)
     }
 
     /**
      * Retrieves a RabbitMQ channel by its ID. If the channel is not cached or is closed, a new one is created.
      *
-     * @param id the ID of the channel to retrieve, defaults to "DEFAULT".
+     * @param channelId the ID of the channel to retrieve, defaults to "DEFAULT".
      * @param connectionId the ID of the connection to use, defaults to "DEFAULT".
      * @return the requested RabbitMQ channel.
      */
-    fun getChannel(id: Int = 0, connectionId: String = "connection_1"): Channel = retry {
-        val channel = channelCache.getOrPut(id) { getConnection(connectionId).createChannel(id) }
+    @Synchronized
+    fun getChannel(channelId: Int = 1, connectionId: String = config.defaultConnectionName): Channel = retry {
+        val id = getChannelKey(connectionId, channelId)
 
-        if (!channel.isOpen) {
-            error("Channel <$id> is not open.")
+        if (channelCache.containsKey(id)){
+            logger.trace("Channel with id: <{}> taken from cache.", id)
         }
 
-        logger.debug("Created new channel with id <{}> for connection with id <{}>.", id, connectionId)
+        val channel = channelCache.getOrPut(id) {
+            val connection = getConnection(connectionId)
+            logConnectionChannel(channelId, connectionId)
+            connection.createChannel(channelId)
+        }
+
+        if (!channel.isOpen) {
+            error("Channel <$channelId> is not open.")
+        }
 
         return@retry channel
     }
@@ -108,10 +142,13 @@ class KabbitMQService(private val config: KabbitMQConfig) {
      *
      * @param channelId the ID of the channel to close and remove.
      */
-    fun closeChannel(channelId: Int) {
-        channelCache[channelId]?.close()
-        channelCache.remove(channelId)
+    @Synchronized
+    fun closeChannel(channelId: Int, connectionId: String = config.defaultConnectionName) {
+        val id = getChannelKey(connectionId, channelId)
 
-        logger.debug("Channel with id: <{}>, closed", channelId)
+        channelCache[id]?.close()
+        channelCache.remove(id)
+
+        logChannelClosed(channelId)
     }
 }

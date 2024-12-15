@@ -156,7 +156,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            else -> error(reportStateTrace())
+            else -> error(reportStateTrace(this@KabbitMQBasicConsumeBuilder))
         }
     }
 }
