@@ -4,10 +4,12 @@ import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.State
 import com.mesh.kabbitMq.delegator.Delegator
 import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
+import com.mesh.kabbitMq.delegator.Delegator.Companion.stateTrace
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
+import io.ktor.util.logging.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
@@ -42,7 +44,7 @@ class KabbitMQBasicPublishBuilder(
 
     fun build() = withThisRef(this@KabbitMQBasicPublishBuilder) {
         return@withThisRef when {
-            initialized(::mandatory, ::immediate) -> {
+            initialized(::exchange, ::routingKey, ::message, ::mandatory, ::immediate, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -53,7 +55,7 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            initialized(::immediate) -> {
+            initialized(::exchange, ::routingKey, ::message, ::immediate, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -63,23 +65,28 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            initialized(::mandatory) -> {
+            initialized(::exchange, ::routingKey, ::message, ::mandatory, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
                     mandatory,
+                    properties,
+                    message
+                )
+            }
+
+            initialized(::exchange, ::routingKey, ::message, ::properties) -> {
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
                     properties,
                     message
                 )
             }
 
             else -> {
-                channel.basicPublish(
-                    exchange,
-                    routingKey,
-                    properties,
-                    message
-                )
+                stateTrace().forEach { KtorSimpleLogger("KabbitMQBasicPublishBuilder").warn(it) }
+                error("Unsupported combination of parameters for basicConsume.")
             }
         }
     }
