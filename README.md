@@ -1,4 +1,4 @@
-# ![Ktor](https://avatars.githubusercontent.com/u/28214161?s=40&v=4.svg) KabbitMQ
+# ![KabbitMQ](https://github.com/user-attachments/assets/1fcc4641-1c1f-44c7-a929-6de86210303c)abbitMQ
 
 ## Overview
 
@@ -9,7 +9,7 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.damirdenis-tudor:kabbitmq:0.2.0")
+    implementation("io.github.damirdenis-tudor:kabbitmq:<version>")
 }
 ```
 
@@ -23,10 +23,10 @@ install(KabbitMQ) {
 ```
 
 ### Features
-- DSL wrapper for almost all the functionalities with parameter validation. 
-- Channel & Connection management mechanism.
-- Built in message serialization and deserialization.
-- Possibility to interact directly with `com.rabbitmq:amqp-client`.
+- DSL wrapper for most functionalities with built-in parameter validation.
+- Robust channel and connection management mechanisms.
+- Integrated message serialization and deserialization.
+- Option to interact directly with `com.rabbitmq:amqp-client`.
 
 ### Samples
 
@@ -70,9 +70,10 @@ connection(
 
 
 ```kotlin
-/* 
- * In com.rabbitmq:amqp-client you have overloaded functions and in order to maintain compatibility with DSL style
- * a mechanism for parameter validation is required. The core of this mechanism is a custom state delegator mechanism.
+/*
+ * `com.rabbitmq:amqp-client` offers overloaded functions, therefore to ensure 
+ * compatibility with the DSL style, a robust parameter validation mechanism is necessary. 
+ * At the heart of this mechanism is a custom state delegator.
  */
 
 basicConsume {

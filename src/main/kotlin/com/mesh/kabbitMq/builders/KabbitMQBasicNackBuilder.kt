@@ -2,7 +2,11 @@ package com.mesh.kabbitMq.builders
 
 import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
+import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
+import com.mesh.kabbitMq.delegator.Delegator.Companion.stateTrace
+import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.Channel
+import io.ktor.util.logging.*
 
 @KabbitMQDslMarker
 class KabbitMQBasicNackBuilder(private val channel: Channel) {
@@ -15,6 +19,16 @@ class KabbitMQBasicNackBuilder(private val channel: Channel) {
         requeue = false
     }
 
-    fun build() = channel.basicNack(deliveryTag, multiple, requeue)
+    fun build() = withThisRef(this@KabbitMQBasicNackBuilder) {
+        return@withThisRef when {
+            initialized(::deliveryTag, ::multiple, ::requeue) -> {
+                channel.basicNack(deliveryTag, multiple, requeue)
+            }
 
+            else -> {
+                stateTrace().forEach { KtorSimpleLogger("KabbitMQBasicNackBuilder").warn(it) }
+                error("Unsupported combination of parameters for basicConsume.")
+            }
+        }
+    }
 }

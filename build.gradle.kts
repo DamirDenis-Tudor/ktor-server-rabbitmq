@@ -58,15 +58,16 @@ publishing {
                 name.set("Ktor rabbitMQ plugin")
                 packaging = "jar"
                 description.set(
-                        "KabbitMQ is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the com.rabbitmq:amqp-client.\n" +
-                        "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n")
+                    "KabbitMQ is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the com.rabbitmq:amqp-client.\n" +
+                            "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n"
+                )
 
-                url.set("https://github.com/DamirDenis-Tudor/kabbitmq")
+                url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
 
                 scm {
-                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/kabbitmq.git")
-                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/kabbitmq.git")
-                    url.set("https://github.com/DamirDenis-Tudor/kabbitmq")
+                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/KabbitMQ.git")
+                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/KabbitMQ.git")
+                    url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
                 }
 
                 licenses {
@@ -88,7 +89,7 @@ publishing {
     }
 
     repositories {
-        maven{
+        maven {
             url = uri("$projectDir/build/publish")
         }
     }
@@ -155,9 +156,9 @@ tasks.register("uploadArtifact") {
                         }
                     }
 
-                     with(this@with.toString(Charsets.UTF_8).apply(::println)) {
+                    with(this@with.toString(Charsets.UTF_8).apply(::println)) {
                         when {
-                            contains("PUBLISHED") ->  Thread.sleep(1_000).apply { return@doLast }
+                            contains("PUBLISHED") -> Thread.sleep(1_000).apply { return@doLast }
                             contains("FAILED") -> Thread.sleep(1_000).apply { exitProcess(-1) }
                             else -> Thread.sleep(60_000)
                         }
