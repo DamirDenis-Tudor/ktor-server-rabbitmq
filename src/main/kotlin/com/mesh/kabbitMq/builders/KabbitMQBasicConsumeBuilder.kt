@@ -1,15 +1,12 @@
 package com.mesh.kabbitMq.builders
 
-import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.mesh.kabbitMq.delegator.Delegator
 import com.mesh.kabbitMq.delegator.Delegator.Companion.initialized
-import com.mesh.kabbitMq.delegator.Delegator.Companion.stateTrace
+import com.mesh.kabbitMq.delegator.Delegator.Companion.reportStateTrace
 import com.mesh.kabbitMq.delegator.Delegator.Companion.withThisRef
+import com.mesh.kabbitMq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.*
-import io.ktor.util.logging.*
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.NotNull
-import kotlin.properties.Delegates
 
 @KabbitMQDslMarker
 class KabbitMQBasicConsumeBuilder(
@@ -159,11 +156,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-
-            else -> {
-                stateTrace().forEach { KtorSimpleLogger("KabbitMQBasicConsumeBuilder").warn(it) }
-                error("Unsupported combination of parameters for basicConsume.")
-            }
+            else -> error(reportStateTrace(this@KabbitMQBasicConsumeBuilder))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.mesh.kabbitMq.delegator
 
+import io.ktor.util.logging.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 
@@ -52,12 +53,34 @@ internal class Delegator<T : Any>{
         }
 
         /**
+         * Logs a trace of the states of all properties of the given object to a logger.
+         * This function calls `stateTrace()` to generate the state trace for the object and then logs it
+         * using the `KtorSimpleLogger` for the object's class.
+         *
+         * If the state trace is generated, the log is output. If the combination of parameters is unsupported,
+         * it throws an error with a message containing the class name of the object.
+         *
+         * @param thisRef the object instance for which to trace and log the state of its properties.
+         *                Defaults to a reference object (`ref`), which can be replaced if needed.
+         * @return message
+         */
+        fun reportStateTrace(thisRef: Any = ref): String {
+            stateTrace().forEach {
+                KtorSimpleLogger("io.kabbitmq.${thisRef.javaClass.simpleName}").debug(it)
+            }
+            return "Unsupported combination of parameters for ${thisRef.javaClass.simpleName}."
+        }
+
+        /**
          * Sets the reference of the current object and executes a block of code using the companion object.
          *
          * @param ref the reference to the current object.
          * @param block the block of code to execute with the companion object.
          */
         fun <T : Any> withThisRef(ref: Any, block: () -> T): T {
+            KtorSimpleLogger("io.kabbitmq.${ref.javaClass.simpleName}")
+                .debug("Build method for method called.")
+
             this.ref = ref
 
             val result = block.invoke()

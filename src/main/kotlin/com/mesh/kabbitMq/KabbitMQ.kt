@@ -13,6 +13,7 @@ val KabbitMQ = createApplicationPlugin(
     createConfiguration = ::KabbitMQConfig
 ) {
     with( KabbitMQService(pluginConfig)){
+        KabbitMQConfig.service = this
         application.attributes.put(KabbitMQServiceKey, this)
     }
 }
