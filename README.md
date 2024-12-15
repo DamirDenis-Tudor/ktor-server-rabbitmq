@@ -76,7 +76,6 @@ connection(
  * At the heart of this mechanism is a custom state delegator.
  */
 
-
 basicConsume {
     queue = "test-queue"
     /* autoAck = true */ // let's say that autoAck is omited
