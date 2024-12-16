@@ -14,14 +14,22 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Upload in Maven
+    - name: Prepare for publish
       run: |
-        ./gradlew uploadArtifact \
+        ./gradlew publish \
           -PreleaseVersion="${{ github.event.release.tag_name }}" \
           -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
           -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
-          -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" \
-          -PtokenBase64="${{ secrets.TOKEN_BASE64 }}"
+          -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}"
+
+    - name: Release in Maven Central
+      run: |
+        ./gradlew jreleaserRelease \
+          -PreleaseVersion="${{ github.event.release.tag_name }}" \
+          -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
+          -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
+          -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
+
 
   update:
     runs-on: ubuntu-latest
@@ -33,7 +41,7 @@ jobs:
           
           newDescription='[Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/kabbitmq/${{ github.event.release.tag_name }})'
 
-          updatedDescription="${newDescription} : ${existingDescription}"
+          updatedDescription="${newDescription} \\n ${existingDescription}"
 
           gh release edit ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --notes "$updatedDescription"
     env:
