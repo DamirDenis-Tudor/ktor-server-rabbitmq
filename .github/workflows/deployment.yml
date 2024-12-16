@@ -58,7 +58,6 @@ jobs:
             -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
             -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
-        update-release:
 
       - name: Update the release
         run: |
