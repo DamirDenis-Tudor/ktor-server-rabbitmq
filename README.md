@@ -127,9 +127,9 @@ DEBUG i.k.KabbitMQBasicConsumeBuilder - <shutdownSignalCallback>, initialized: <
 
 java.lang.IllegalStateException: Unsupported combination of parameters for KabbitMQBasicConsumeBuilder.
 
-	at com.mesh.kabbitMq.builders.KabbitMQBasicConsumeBuilder.build$lambda$3(KabbitMQBasicConsumeBuilder.kt:159)
-	at com.mesh.kabbitMq.delegator.Delegator$Companion.withThisRef(Delegator.kt:86)
-	at com.mesh.kabbitMq.builders.KabbitMQBasicConsumeBuilder.build(KabbitMQBasicConsumeBuilder.kt:65)
+	at io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.KabbitMQBasicConsumeBuilder.build$lambda$3(KabbitMQBasicConsumeBuilder.kt:159)
+	at io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator$Companion.withThisRef(Delegator.kt:86)
+	at io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.KabbitMQBasicConsumeBuilder.build(KabbitMQBasicConsumeBuilder.kt:65)
 ```
 
 #### Serialization and deserialization sample

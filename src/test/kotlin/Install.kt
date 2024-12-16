@@ -1,5 +1,5 @@
-import com.mesh.kabbitMq.KabbitMQ
-import com.mesh.kabbitMq.dsl.extensions.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.KabbitMQ
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.extensions.*
 import com.rabbitmq.client.BuiltinExchangeType
 import io.ktor.server.application.*
 import io.ktor.server.config.*
