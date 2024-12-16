@@ -1,3 +1,4 @@
+import org.jreleaser.model.Active
 import java.io.ByteArrayOutputStream
 import kotlin.system.exitProcess
 
@@ -10,12 +11,16 @@ val kotlinxVersion: String by project
 plugins {
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.serialization") version "2.1.0"
+    id("org.jreleaser") version "1.15.0"
     id("maven-publish")
     id("signing")
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: "0.3.5"
+version = project.findProperty("releaseVersion") ?: "1.0.0"
+
+val mavenCentralUsername = project.findProperty("mavenCentralUsername")?.toString() ?: ""
+val mavenCentralPasswordToken = project.findProperty("mavenCentralPasswordToken")?.toString() ?: ""
 
 repositories {
     mavenCentral()
@@ -48,7 +53,7 @@ publishing {
     publications {
         create<MavenPublication>("kotlin") {
             groupId = "io.github.damirdenis-tudor"
-            artifactId = "kabbitmq"
+            artifactId = "ktor-server-rabbitmq"
             from(components["java"])
 
             artifact(tasks["kotlinSourcesJar"])
@@ -62,12 +67,12 @@ publishing {
                             "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n"
                 )
 
-                url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
+                url.set("https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq")
 
                 scm {
-                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/KabbitMQ.git")
-                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/KabbitMQ.git")
-                    url.set("https://github.com/DamirDenis-Tudor/KabbitMQ")
+                    connection.set("scm:git:https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq.git")
+                    developerConnection.set("scm:git:git@github.com:DamirDenis-Tudor/ktor-server-rabbitmq.git")
+                    url.set("https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq")
                 }
 
                 licenses {
@@ -87,10 +92,9 @@ publishing {
             }
         }
     }
-
     repositories {
         maven {
-            url = uri("$projectDir/build/publish")
+            url = layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
         }
     }
 }
@@ -99,74 +103,42 @@ signing {
     sign(publishing.publications["kotlin"])
 }
 
-tasks.register<Zip>("zipBuildFolder") {
-    dependsOn(tasks["clean"])
-    dependsOn("publish")
-
-    from("$projectDir/build/publish")
-
-    archiveFileName.set("io.zip")
-    destinationDirectory.set(file("$projectDir/build"))
-}
-
-tasks.register("uploadArtifact") {
-    dependsOn("zipBuildFolder")
-
-    doLast {
-        val zipFile = file("$projectDir/build/io.zip")
-        val base64Token = project.findProperty("tokenBase64")?.toString() ?: ""
-
-        println("Uploading artifact...")
-
-        val output = ByteArrayOutputStream()
-        exec {
-            commandLine(
-                "curl", "--silent", "--request", "POST",
-                "--header", "Authorization: Bearer $base64Token",
-                "--form", "bundle=@${zipFile.absolutePath}",
-                "https://central.sonatype.com/api/v1/publisher/upload?name=kabbitmq&publishingType=AUTOMATIC"
-            )
-            standardOutput = output
-        }.let {
-            if (it.exitValue != 0) {
-                println("Upload failed. Exiting...")
-                return@doLast
-            }
+jreleaser {
+    release {
+        github{
+            token = "dsfg"
         }
+        project {
+            name = "ktor-server-rabbitmq"
+            description.set("Ktor Server RabbitMQ plugin")
+            copyright.set("Damir Denis-Tudor")
+        }
+        deploy {
+            maven {
+                mavenCentral {
+                    create("sonatype"){
+                        active = Active.RELEASE
+                        url = "https://central.sonatype.com/api/v1/publisher"
 
-        println("Artifact successfully uploaded...")
+                        snapshotSupported = true
 
-        val uploadId = output.toString(Charsets.UTF_8)
-        while (true) {
-            runCatching {
-                println("Checking upload status...")
-                with(ByteArrayOutputStream()) {
-                    exec {
-                        commandLine(
-                            "curl", "--silent", "--request", "POST",
-                            "--url", "https://central.sonatype.com/api/v1/publisher/status?id=$uploadId",
-                            "--header", "accept: application/json",
-                            "--header", "Authorization: Bearer $base64Token"
-                        )
-                        standardOutput = this@with
-                    }.let {
-                        if (it.exitValue != 0) {
-                            println("Deployment not published ...")
-                            return@doLast
-                        }
-                    }
+                        setAuthorization("BEARER")
+                        username = mavenCentralUsername
+                        password = mavenCentralPasswordToken
 
-                    with(this@with.toString(Charsets.UTF_8).apply(::println)) {
-                        when {
-                            contains("PUBLISHED") -> Thread.sleep(1_000).apply { return@doLast }
-                            contains("FAILED") -> Thread.sleep(1_000).apply { exitProcess(-1) }
-                            else -> Thread.sleep(60_000)
-                        }
+                        stagingRepository("build/staging-deploy")
+
+                        connectTimeout = 20
+                        readTimeout = 60
+                        sign = false
+
+                        verifyUrl = "https://repo1.maven.org/maven2/{{path}}/{{filename}}"
+                        namespace = "io.github.damirdenis-tudor"
+
+                        retryDelay = 10
+                        maxRetries = 60
                     }
                 }
-            }.getOrElse { e ->
-                println("Error while checking status: ${e.message}")
-                Thread.sleep(1000).apply { exitProcess(-1) }
             }
         }
     }

@@ -1,1 +1,1 @@
-rootProject.name = "kabbitmq"
+rootProject.name = "ktor-server-rabbitmq"
