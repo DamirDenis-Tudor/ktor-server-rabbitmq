@@ -19,4 +19,10 @@ class KabbitMQConfig(config: ApplicationConfig) {
     var defaultConnectionName: String = config.tryGetString("defaultConnectionName") ?: "default_connection"
     var connectionAttempts: Int = config.tryGetString("connectionAttempts")?.toInt() ?: 10
     var attemptDelay: Int = config.tryGetString("attemptDelay")?.toInt() ?: 5
+
+    var tlsEnabled: Boolean = config.tryGetString("tls.enabled")?.toBoolean() ?: false
+    var tlsKeystorePath: String = config.tryGetString("tls.keystorePath") ?: ""
+    var tlsKeystorePassword: String = config.tryGetString("tls.keystorePassword") ?: ""
+    var tlsTruststorePath: String = config.tryGetString("tls.truststorePath") ?: ""
+    var tlsTruststorePassword: String = config.tryGetString("tls.truststorePassword") ?: ""
 }

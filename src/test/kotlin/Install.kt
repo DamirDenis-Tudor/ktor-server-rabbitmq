@@ -35,6 +35,7 @@ class PluginTesting {
             install(KabbitMQ) {
                 uri = "amqp://guest:guest@localhost:5672"
                 connectionAttempts = 1
+                tlsEnabled = true
             }
         }
 
