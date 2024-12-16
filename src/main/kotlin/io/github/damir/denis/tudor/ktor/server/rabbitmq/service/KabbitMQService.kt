@@ -4,9 +4,16 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import io.ktor.util.logging.*
+import java.io.FileInputStream
 import java.lang.Thread.sleep
+import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
+import javax.net.ssl.KeyManagerFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 import kotlin.random.Random
+import kotlin.system.exitProcess
 
 /**
  * Service class that manages RabbitMQ connections and channels.
@@ -18,18 +25,60 @@ import kotlin.random.Random
  * @version 0.1.0
  */
 class KabbitMQService(private val config: KabbitMQConfig) {
-    private val connectionFactory = ConnectionFactory().apply { setUri(config.uri) }
+    private val connectionFactory = ConnectionFactory()
+
     private val connectionCache = ConcurrentHashMap<String, Connection>()
     private val channelCache = ConcurrentHashMap<String, Channel>()
 
     private val logger = KtorSimpleLogger(this.javaClass.name)
 
     init {
+        connectionFactory.apply {
+            if(config.tlsEnabled)
+                connectionFactory.apply { enableTLS() }
+            setUri(config.uri)
+        }
+
         when {
             logger.isDebugEnabled -> logger.debug("Debug mode is enabled.")
             logger.isTraceEnabled -> logger.debug("Trace mode is enabled.")
+
         }
     }
+
+    /**
+     * Configures TLS settings for RabbitMQ connection.
+     */
+    private fun ConnectionFactory.enableTLS() {
+        run {
+            val keyStore = KeyStore.getInstance("PKCS12").apply {
+                load(
+                    FileInputStream(config.tlsKeystorePath),
+                    config.tlsKeystorePassword.toCharArray()
+                )
+            }
+
+            val trustStore = KeyStore.getInstance("JKS").apply {
+                load(
+                    FileInputStream(config.tlsTruststorePath),
+                    config.tlsTruststorePassword.toCharArray()
+                )
+            }
+
+            val keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+            keyManagerFactory.init(keyStore, config.tlsKeystorePassword.toCharArray())
+
+            val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(trustStore)
+
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(keyManagerFactory.keyManagers, trustManagerFactory.trustManagers, null)
+            useSslProtocol(sslContext)
+
+            logger.debug("TLS enabled for RabbitMQ connection")
+        }
+    }
+
 
     private fun getChannelKey(connectionId: String, channelId: Int): String =
         "$connectionId-channel-$channelId"
@@ -70,7 +119,7 @@ class KabbitMQService(private val config: KabbitMQConfig) {
      */
     @Synchronized
     fun getConnection(id: String = config.defaultConnectionName): Connection = retry {
-        if (connectionCache.containsKey(id)){
+        if (connectionCache.containsKey(id)) {
             logger.trace("Connection with id: <{}> taken from cache.", id)
         }
 
@@ -121,7 +170,7 @@ class KabbitMQService(private val config: KabbitMQConfig) {
     fun getChannel(channelId: Int = 1, connectionId: String = config.defaultConnectionName): Channel = retry {
         val id = getChannelKey(connectionId, channelId)
 
-        if (channelCache.containsKey(id)){
+        if (channelCache.containsKey(id)) {
             logger.trace("Channel with id: <{}> taken from cache.", id)
         }
 
