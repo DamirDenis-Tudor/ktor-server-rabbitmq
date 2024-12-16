@@ -1,6 +1,4 @@
 import org.jreleaser.model.Active
-import java.io.ByteArrayOutputStream
-import kotlin.system.exitProcess
 
 val ktorVersion: String by project
 val kotlinVersion: String by project
