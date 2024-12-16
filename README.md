@@ -1,5 +1,5 @@
 # ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ 
-![Deployment Status](https://img.shields.io/badge/deployment-running-blue?style=flat)
+![Deployment Status](https://img.shields.io/badge/deployment-success-green?style=flat)
 
 ## Overview
 
@@ -10,16 +10,25 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.damirdenis-tudor:kabbitmq:<version>")
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.1.0")
 }
 ```
 
 ### Installation
 
 ```kotlin
+
 install(KabbitMQ) {
-    uri = "amqp://guest:guest@localhost:5678"
-    connectionName = "guest"
+    uri = "amqp://<user>:<password>@<address>:<port>"
+    defaultConnectionName = "<default_connection>"
+    connectionAttempts = 20
+    attemptDelay = 10
+
+    tlsEnabled = true
+    tlsKeystorePath = "<path>"
+    tlsKeystorePassword = "<password>"
+    tlsTruststorePath = "<path>"
+    tlsTruststorePassword = "<password>"
 }
 ```
 
@@ -195,7 +204,6 @@ data class Message(
 fun Application.queueBinding() {
     install(KabbitMQ) {
         uri = "amqp://guest:guest@localhost:5678"
-        connectionName = "guest"
     }
 
     // declare dead letter queue
