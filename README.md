@@ -1,4 +1,5 @@
-# ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ
+# ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ 
+![Deployment Status](https://img.shields.io/badge/deployment-success-green?style=flat)
 
 ## Overview
 
