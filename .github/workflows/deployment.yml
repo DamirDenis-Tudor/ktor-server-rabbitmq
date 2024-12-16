@@ -27,19 +27,6 @@ jobs:
           branch: "main"
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update the release
-        run: |
-          MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
-          RELEASE_BODY="Release Notes: [Maven Central Repository]($MAVEN_CENTRAL_URL)"
-
-          if [ -n "${{ github.event.pull_request }}" ]; then
-            PR_URL="${{ github.event.pull_request.html_url }}"
-            RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
-          fi
-
-          gh release edit ${{ github.event.release.tag_name }} \
-            --body "$RELEASE_BODY"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -59,22 +46,6 @@ jobs:
             -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Update the release
-        run: |
-          MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
-          RELEASE_BODY="[Maven Central Repository]($MAVEN_CENTRAL_URL)"
-          
-          if [ -n "${{ github.event.pull_request }}" ]; then
-            PR_URL="${{ github.event.pull_request.html_url }}"
-            RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
-          fi
-          
-          gh release edit ${{ github.event.release.tag_name }} \
-             --notes "$RELEASE_BODY"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-
   update-success:
     runs-on: ubuntu-latest
     needs: deploy
@@ -90,11 +61,10 @@ jobs:
           else
             echo "README.md not found, skipping README update."
           fi
-
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
-          message: "Update README with success deployment badge"
+          message: "[Maven Central Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }})"
           branch: "main"
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
