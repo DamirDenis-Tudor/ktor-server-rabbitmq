@@ -21,6 +21,7 @@ version = project.findProperty("releaseVersion") ?: "1.0.0"
 
 val mavenCentralUsername = project.findProperty("mavenCentralUsername")?.toString() ?: ""
 val mavenCentralPasswordToken = project.findProperty("mavenCentralPasswordToken")?.toString() ?: ""
+val githubToken = project.findProperty("githubToken")?.toString() ?: "no_blank"
 
 repositories {
     mavenCentral()
@@ -106,7 +107,7 @@ signing {
 jreleaser {
     release {
         github{
-            token = "dsfg"
+            token = githubToken
         }
         project {
             name = "ktor-server-rabbitmq"
@@ -135,8 +136,8 @@ jreleaser {
                         verifyUrl = "https://repo1.maven.org/maven2/{{path}}/{{filename}}"
                         namespace = "io.github.damirdenis-tudor"
 
-                        retryDelay = 10
-                        maxRetries = 60
+                        retryDelay = 60
+                        maxRetries = 100
                     }
                 }
             }

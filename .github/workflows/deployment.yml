@@ -4,37 +4,120 @@ on:
   release:
     types:
       - published
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-
-    - name: Upload in Maven
-      run: |
-        ./gradlew uploadArtifact \
-          -PreleaseVersion="${{ github.event.release.tag_name }}" \
-          -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
-          -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
-          -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}" \
-          -PtokenBase64="${{ secrets.TOKEN_BASE64 }}"
-
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update release description
-
+      - name: Update README file with failed badge
         run: |
-          existingDescription=$(gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q '.body')
+          if [ -f "README.md" ]; then
+            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-running-blue?style=flat)|" README.md
+          else
+            echo "README.md not found, skipping README update."
+          fi
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          message: "Update README with running deployment badge"
+          branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update the release
+        run: |
+          MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
+          RELEASE_BODY="Release Notes: [Maven Central Repository]($MAVEN_CENTRAL_URL)"
+
+          if [ -n "${{ github.event.pull_request }}" ]; then
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
+          fi
+
+          gh release edit ${{ github.event.release.tag_name }} \
+            --body "$RELEASE_BODY"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Prepare for publish
+        run: |
+          ./gradlew publish \
+            -PreleaseVersion="${{ github.event.release.tag_name }}" \
+            -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
+            -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
+            -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}"
+
+      - name: Release in Maven Central
+        run: |
+          ./gradlew jreleaserRelease \
+            -PreleaseVersion="${{ github.event.release.tag_name }}" \
+            -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
+            -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
+            -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
+        update-release:
+
+      - name: Update the release
+        run: |
+          MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
+          RELEASE_BODY="[Maven Central Repository]($MAVEN_CENTRAL_URL)"
           
-          newDescription='[Maven Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/kabbitmq/${{ github.event.release.tag_name }})'
+          if [ -n "${{ github.event.pull_request }}" ]; then
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
+          fi
+          
+          gh release edit ${{ github.event.release.tag_name }} \
+             --notes "$RELEASE_BODY"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
-          updatedDescription="${newDescription} : ${existingDescription}"
 
-          gh release edit ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --notes "$updatedDescription"
-    env:
-      GH_TOKEN: ${{ github.token }}
+  update-success:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update README file with success badge
+        run: |
+          if [ -f "README.md" ]; then
+            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-success-green?style=flat)|" README.md
+          else
+            echo "README.md not found, skipping README update."
+          fi
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          message: "Update README with success deployment badge"
+          branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  update-failed:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update README file with failed badge
+        run: |
+          if [ -f "README.md" ]; then
+            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-failed-red?style=flat)|" README.md
+          else
+            echo "README.md not found, skipping README update."
+          fi
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          message: "Update README with failed deployment badge"
+          branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
