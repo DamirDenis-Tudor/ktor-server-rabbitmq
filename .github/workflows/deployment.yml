@@ -30,15 +30,17 @@ jobs:
       - name: Update the release
         run: |
           MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
-          RELEASE_BODY="Release Notes: [Maven Central Repository]($MAVEN_CENTRAL_URL)"
-
+          RELEASE_BODY="[Maven Central Repository]($MAVEN_CENTRAL_URL)"
+          
           if [ -n "${{ github.event.pull_request }}" ]; then
             PR_URL="${{ github.event.pull_request.html_url }}"
             RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
           fi
-
+          
           gh release edit ${{ github.event.release.tag_name }} \
-            --body "$RELEASE_BODY"
+             --notes "$RELEASE_BODY"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -58,22 +60,6 @@ jobs:
             -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
             -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Update the release
-        run: |
-          MAVEN_CENTRAL_URL="https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }}"
-          RELEASE_BODY="[Maven Central Repository]($MAVEN_CENTRAL_URL)"
-          
-          if [ -n "${{ github.event.pull_request }}" ]; then
-            PR_URL="${{ github.event.pull_request.html_url }}"
-            RELEASE_BODY="${RELEASE_BODY}\n\nRelated Pull Request: [PR #${{ github.event.pull_request.number }}]($PR_URL)"
-          fi
-          
-          gh release edit ${{ github.event.release.tag_name }} \
-             --notes "$RELEASE_BODY"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
 
   update-success:
     runs-on: ubuntu-latest
