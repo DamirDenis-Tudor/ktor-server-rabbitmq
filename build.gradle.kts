@@ -30,7 +30,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
 
     //serializing
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
 
     // rabbitmq
     api("com.rabbitmq:amqp-client:$rabbitmqVersion")
