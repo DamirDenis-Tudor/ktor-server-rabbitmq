@@ -7,10 +7,11 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Comp
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-
+@Serializable
 @KabbitMQDslMarker
 class KabbitMQBasicPublishBuilder(
     private val channel: Channel,
