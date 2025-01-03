@@ -11,9 +11,6 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
-import kotlin.random.Random
-import kotlin.system.exitProcess
 
 /**
  * Service class that manages RabbitMQ connections and channels.
@@ -162,7 +159,7 @@ class KabbitMQService(private val config: KabbitMQConfig) {
     /**
      * Retrieves a RabbitMQ channel by its ID. If the channel is not cached or is closed, a new one is created.
      *
-     * @param channelId the ID of the channel to retrieve, defaults to "DEFAULT".
+     * @param channelId the ID of the channel to retrieve, defaults to 1.
      * @param connectionId the ID of the connection to use, defaults to "DEFAULT".
      * @return the requested RabbitMQ channel.
      */
@@ -171,17 +168,20 @@ class KabbitMQService(private val config: KabbitMQConfig) {
         val id = getChannelKey(connectionId, channelId)
 
         if (channelCache.containsKey(id)) {
-            logger.trace("Channel with id: <{}> taken from cache.", id)
+            logger.trace("Channel with id: <{}> will be taken from cache.", id)
         }
 
         val channel = channelCache.getOrPut(id) {
             val connection = getConnection(connectionId)
             logConnectionChannel(channelId, connectionId)
             connection.createChannel(channelId)
+
         }
 
         if (!channel.isOpen) {
-            error("Channel <$channelId> is not open.")
+
+            channelCache.remove(id)
+            error("Channel <$channelId> is not open. ${channel.closeReason.message}")
         }
 
         return@retry channel

@@ -20,7 +20,7 @@ inline fun Application.basicPublish(block: KabbitMQBasicPublishBuilder.() -> Uni
  */
 @KabbitMQDslMarker
 inline fun Channel.basicPublish(block: KabbitMQBasicPublishBuilder.() -> Unit) =
-    KabbitMQBasicPublishBuilder(this,).apply(block).build()
+    KabbitMQBasicPublishBuilder(this).apply(block).build()
 
 /**
  * @see AMQP.BasicProperties

@@ -9,7 +9,7 @@ val KabbitMQServiceKey = AttributeKey<KabbitMQService>("KabbitMQService")
 
 val KabbitMQ = createApplicationPlugin(
     name = "KabbitMQ",
-    configurationPath = "rabbitmq",
+    configurationPath = "ktor.rabbitmq",
     createConfiguration = ::KabbitMQConfig
 ) {
     with( KabbitMQService(pluginConfig)){

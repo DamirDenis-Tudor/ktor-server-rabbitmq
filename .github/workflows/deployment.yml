@@ -1,9 +1,12 @@
 name: Deployment
 
 on:
-  release:
+  pull_request:
     types:
-      - published
+      - closed
+    branches:
+      - main
+    title: ^(\d+)\.(\d+)\.(\d+)$
 
 jobs:
   deploy:
@@ -11,21 +14,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
-
-      - name: Update README file with failed badge
-        run: |
-          if [ -f "README.md" ]; then
-            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-running-blue?style=flat)|" README.md
-          else
-            echo "README.md not found, skipping README update."
-          fi
-
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          message: "Update README with running deployment badge"
-          branch: "main"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
