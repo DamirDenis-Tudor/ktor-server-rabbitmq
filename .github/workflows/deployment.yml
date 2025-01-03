@@ -7,6 +7,10 @@ on:
     branches:
       - main
     title: ^(\d+)\.(\d+)\.(\d+)$
+  push:
+    branches:
+      - main
+    commit_message: '^(\d+)\.(\d+)\.(\d+)$'
 
 jobs:
   deploy:
@@ -15,13 +19,23 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      - name: Set version from pull request or commit message
+        id: set_version
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            VERSION="${{ github.event.pull_request.title }}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION="${{ github.event.head_commit.message }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Prepare for publish
         run: |
           ./gradlew publish \
-            -PreleaseVersion="${{ github.event.release.tag_name }}" \
+            -PreleaseVersion="${{ env.VERSION }}" \
             -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
             -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
             -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}"
@@ -29,7 +43,7 @@ jobs:
       - name: Release in Maven Central
         run: |
           ./gradlew jreleaserRelease \
-            -PreleaseVersion="${{ github.event.release.tag_name }}" \
+            -PreleaseVersion="${{ env.VERSION }}" \
             -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
             -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
@@ -52,7 +66,7 @@ jobs:
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
-          message: "[Maven Central Repository](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/${{ github.event.release.tag_name }})"
+          message: "Update README with success deployment badge"
           branch: "main"
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
