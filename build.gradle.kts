@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "io.github.damirdenis-tudor"
-version = project.findProperty("releaseVersion") ?: "1.0.0"
+version = project.findProperty("releaseVersion") ?: "0.0.1"
 
 val mavenCentralUsername = project.findProperty("mavenCentralUsername")?.toString() ?: ""
 val mavenCentralPasswordToken = project.findProperty("mavenCentralPasswordToken")?.toString() ?: ""

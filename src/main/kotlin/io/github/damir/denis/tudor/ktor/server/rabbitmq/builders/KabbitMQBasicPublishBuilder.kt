@@ -11,7 +11,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-@Serializable
 @KabbitMQDslMarker
 class KabbitMQBasicPublishBuilder(
     private val channel: Channel,
@@ -85,3 +84,4 @@ class KabbitMQBasicPublishBuilder(
         }
     }
 }
+
