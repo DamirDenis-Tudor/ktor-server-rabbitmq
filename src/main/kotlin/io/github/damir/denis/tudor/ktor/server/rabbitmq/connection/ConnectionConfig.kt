@@ -27,6 +27,10 @@ class ConnectionConfig(config: ApplicationConfig) {
     var tlsTruststorePassword: String = config.tryGetString("tls.truststorePassword") ?: ""
 
     fun verify(){
+        require(connectionAttempts > 0) { "connectionAttempts must be > 0" }
+        require(attemptDelay > 0) { "attemptDelay must be > 0" }
+        require(defaultConnectionName.isNotEmpty()) { "defaultConnectionName cannot be empty" }
+        require(uri.isNotEmpty()) { "uri cannot be empty" }
         if (tlsEnabled){
             require(tlsKeystorePath.isNotEmpty()){ "tlsKeystorePath cannot be empty, tlsEnabled: $tlsEnabled" }
             require(tlsKeystorePassword.isNotEmpty()){ "tlsKeystorePassword cannot be empty, tlsEnabled: $tlsEnabled" }

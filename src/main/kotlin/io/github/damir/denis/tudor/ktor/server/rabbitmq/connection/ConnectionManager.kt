@@ -21,7 +21,7 @@ import javax.net.ssl.TrustManagerFactory
  *
  * @param config the configuration object containing RabbitMQ connection settings.
  */
-class ConnectionManager(private val config: ConnectionConfig) {
+open class ConnectionManager(private val config: ConnectionConfig) {
     private val connectionFactory = ConnectionFactory()
 
     private val channelCache = ConcurrentHashMap<String, Channel>()
@@ -88,12 +88,13 @@ class ConnectionManager(private val config: ConnectionConfig) {
                 .onSuccess {
                     return@retry it
                 }.onFailure {
+                    if (it is InterruptedException) throw it
                     logger.warn("${it.message}. Attempt ${index + 1} failed: ${it.message}.")
                     sleep(config.attemptDelay * 1000L)
                 }
         }
 
-        error("Failed after ${config.connectionAttempts} retries")
+        throw InterruptedException("Failed after ${config.connectionAttempts} retries")
     }
 
     /**
@@ -111,7 +112,7 @@ class ConnectionManager(private val config: ConnectionConfig) {
         }
 
         val connection = connectionCache.getOrPut(id) {
-            logger.trace("Created new connection with id: <$id>.")
+            logger.trace("Creating new connection with id: <$id>.")
             connectionFactory.newConnection(id)
         }
 
