@@ -1,13 +1,12 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
-import kotlinx.serialization.Serializable
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -38,9 +37,9 @@ class KabbitMQBasicPublishBuilder(
         message = Json.encodeToString(block).toByteArray(Charsets.UTF_8)
     }
 
-    fun build() = withThisRef(this@KabbitMQBasicPublishBuilder) {
-        return@withThisRef when {
-            initialized(::exchange, ::routingKey, ::message, ::mandatory, ::immediate, ::properties) -> {
+    fun build() = delegatorScope(on = this@KabbitMQBasicPublishBuilder) {
+        return@delegatorScope when {
+            verify(::exchange, ::routingKey, ::message, ::mandatory, ::immediate, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -51,7 +50,7 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            initialized(::exchange, ::routingKey, ::message, ::immediate, ::properties) -> {
+            verify(::exchange, ::routingKey, ::message, ::immediate, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -61,7 +60,7 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            initialized(::exchange, ::routingKey, ::message, ::mandatory, ::properties) -> {
+            verify(::exchange, ::routingKey, ::message, ::mandatory, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -71,7 +70,7 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            initialized(::exchange, ::routingKey, ::message, ::properties) -> {
+            verify(::exchange, ::routingKey, ::message, ::properties) -> {
                 channel.basicPublish(
                     exchange,
                     routingKey,
@@ -80,7 +79,7 @@ class KabbitMQBasicPublishBuilder(
                 )
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 }

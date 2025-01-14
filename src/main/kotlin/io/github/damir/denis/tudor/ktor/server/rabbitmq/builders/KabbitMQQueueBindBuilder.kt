@@ -1,12 +1,12 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 @KabbitMQDslMarker
 class KabbitMQQueueBindBuilder(private val channel: Channel) {
@@ -19,17 +19,17 @@ class KabbitMQQueueBindBuilder(private val channel: Channel) {
         routingKey = ""
     }
 
-    fun build(): AMQP.Queue.BindOk = withThisRef(this@KabbitMQQueueBindBuilder) {
-        return@withThisRef when {
-            initialized(::queue, ::exchange, ::routingKey,::arguments) -> {
+    fun build(): AMQP.Queue.BindOk = delegatorScope(on = this@KabbitMQQueueBindBuilder) {
+        return@delegatorScope when {
+            verify(::queue, ::exchange, ::routingKey,::arguments) -> {
                 channel.queueBind(queue, exchange, routingKey, arguments)
             }
 
-            initialized(::queue, ::exchange, ::routingKey) -> {
+            verify(::queue, ::exchange, ::routingKey) -> {
                 channel.queueBind(queue, exchange, routingKey)
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 }

@@ -1,12 +1,12 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 @KabbitMQDslMarker
 class KabbitMQQueueDeclareBuilder(private val channel: Channel) {
@@ -23,13 +23,13 @@ class KabbitMQQueueDeclareBuilder(private val channel: Channel) {
         arguments = emptyMap()
     }
 
-    fun build(): AMQP.Queue.DeclareOk = withThisRef(this@KabbitMQQueueDeclareBuilder) {
-        return@withThisRef when {
-            initialized(::queue, ::durable, ::exclusive, ::autoDelete, ::arguments) -> {
+    fun build(): AMQP.Queue.DeclareOk = delegatorScope(on = this@KabbitMQQueueDeclareBuilder) {
+        return@delegatorScope when {
+            verify(::queue, ::durable, ::exclusive, ::autoDelete, ::arguments) -> {
                 channel.queueDeclare(queue, durable, exclusive, autoDelete, arguments)
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 }

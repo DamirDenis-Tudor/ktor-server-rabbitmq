@@ -1,10 +1,10 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import java.util.*
 
 @KabbitMQDslMarker
@@ -28,22 +28,22 @@ class KabbitMQBasicPropertiesBuilder {
     var clusterId: String by Delegator()
 
     fun build(): AMQP.BasicProperties {
-        withThisRef(this@KabbitMQBasicPropertiesBuilder) {
+        delegatorScope(on = this@KabbitMQBasicPropertiesBuilder) {
             when {
-                initialized(::contentType) -> builder.contentType(contentType)
-                initialized(::contentEncoding) -> builder.contentEncoding(contentEncoding)
-                initialized(::headers) -> builder.headers(headers)
-                initialized(::deliveryMode) -> builder.deliveryMode(deliveryMode)
-                initialized(::priority) -> builder.priority(priority)
-                initialized(::correlationId) -> builder.correlationId(correlationId)
-                initialized(::replyTo) -> builder.replyTo(replyTo)
-                initialized(::expiration) -> builder.expiration(expiration)
-                initialized(::messageId) -> builder.messageId(messageId)
-                initialized(::timestamp) -> builder.timestamp(timestamp)
-                initialized(::type) -> builder.type(type)
-                initialized(::userId) -> builder.userId(userId)
-                initialized(::appId) -> builder.appId(appId)
-                initialized(::clusterId) -> builder.clusterId(clusterId)
+                verify(::contentType) -> builder.contentType(contentType)
+                verify(::contentEncoding) -> builder.contentEncoding(contentEncoding)
+                verify(::headers) -> builder.headers(headers)
+                verify(::deliveryMode) -> builder.deliveryMode(deliveryMode)
+                verify(::priority) -> builder.priority(priority)
+                verify(::correlationId) -> builder.correlationId(correlationId)
+                verify(::replyTo) -> builder.replyTo(replyTo)
+                verify(::expiration) -> builder.expiration(expiration)
+                verify(::messageId) -> builder.messageId(messageId)
+                verify(::timestamp) -> builder.timestamp(timestamp)
+                verify(::type) -> builder.type(type)
+                verify(::userId) -> builder.userId(userId)
+                verify(::appId) -> builder.appId(appId)
+                verify(::clusterId) -> builder.clusterId(clusterId)
                 else -> {}
             }
         }
