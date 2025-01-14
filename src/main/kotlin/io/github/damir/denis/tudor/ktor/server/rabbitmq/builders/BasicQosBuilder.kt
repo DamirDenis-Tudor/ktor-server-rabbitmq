@@ -5,16 +5,16 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
 
-@KabbitMQDslMarker
-class KabbitMQBasicQosBuilder(private val channel: Channel) {
+@RabbitDslMarker
+class BasicQosBuilder(private val channel: Channel) {
     var prefetchSize: Int by Delegator()
     var prefetchCount: Int by Delegator()
     var global: Boolean by Delegator()
 
-    fun build() = delegatorScope(on = this@KabbitMQBasicQosBuilder) {
+    fun build() = delegatorScope(on = this@BasicQosBuilder) {
         return@delegatorScope when {
             verify(::prefetchCount, ::prefetchCount, ::global) -> {
                 channel.basicQos(prefetchSize, prefetchCount, global)

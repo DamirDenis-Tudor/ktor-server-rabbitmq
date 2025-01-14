@@ -7,23 +7,29 @@ import kotlin.reflect.full.memberProperties
 
 /**
  * StateRegistry is a utility object to manage and trace the initialization
- * states of properties in an object. It uses a map to keep track of
- * the initialization state of each property and provides methods
- * to verify, trace, and manipulate these states.
+ * states of properties in an object. It uses thread-local storage to manage
+ * state and references for thread safety and separation.
  *
- * @author Damir Denis-Tudor
- * @version 1.1.3
+ * @version 1.1.4
  */
 object StateRegistry {
-    /* Holds a reference to the current object for when the delegate scope is being called */
-    private lateinit var ref: Any
+    /**
+     * Thread-local storage for the reference to the current object
+     * and it's logger for the current thread's context.
+     */
+    private val ref = ThreadLocal<Any?>()
+    private val logger = ThreadLocal<Logger>()
 
-    /* Logger for debugging purposes. */
-    private lateinit var logger: Logger
-    private val default = KtorSimpleLogger(this.javaClass.name)
+    /* Default logger for fallback. */
+    private val defaultLogger = KtorSimpleLogger(this.javaClass.name)
 
-    /* Map to store the state of properties, identified by the combination of object and property name. */
-    private var states = mutableMapOf<Pair<String, String>, State<Any>>()
+    /**
+     * Thread-local map to store the states of properties, identified by
+     * the combination of object and property name.
+     */
+    private val states = ThreadLocal.withInitial {
+        mutableMapOf<Pair<String, String>, State<Any>>()
+    }
 
     /**
      * Adds a state for a given property.
@@ -33,7 +39,7 @@ object StateRegistry {
      * @param state the state to assign to the property.
      */
     fun addState(propertyOf: String, propertyName: String, state: State<Any>) {
-        states[propertyOf to propertyName] = state
+        states.get()[propertyOf to propertyName] = state
     }
 
     /**
@@ -44,20 +50,16 @@ object StateRegistry {
      * @param block the block of code to execute with the context of this object.
      */
     fun <T : Any> delegatorScope(on: Any, block: () -> T): T {
-        this.ref = on
-        this.logger = KtorSimpleLogger(on.javaClass.name)
+        ref.set(on)
+        logger.set(KtorSimpleLogger(on.javaClass.name))
 
-        val result = block.invoke()
-
-        // Reset the reference and logger after block execution.
-        this.ref = Any()
-        this.logger = default
-
-        // Remove states related to the current object.
-        states = states.filter { it.key.first != on.javaClass.name }
-            .toMutableMap()
-
-        return result
+        return try {
+            block()
+        } finally {
+            ref.remove()
+            logger.set(defaultLogger)
+            states.remove()
+        }
     }
 
     /**
@@ -67,9 +69,12 @@ object StateRegistry {
      * @return true if all properties are initialized, false otherwise.
      */
     fun verify(vararg properties: KProperty<*>): Boolean {
-        return properties.all {
-            states.getOrPut(ref.javaClass.simpleName to it.name) { State.Uninitialized } !is State.Uninitialized
-        }
+        ref.get()?.let {
+            return properties.all {
+                states.get().getOrPut(it.javaClass.simpleName to it.name)
+                { State.Uninitialized } !is State.Uninitialized
+            }
+        } ?: error("No reference set for the current thread.")
     }
 
     /**
@@ -79,8 +84,9 @@ object StateRegistry {
      * @return a list of strings representing the state and value of each property.
      */
     fun stateTrace(): List<String> {
-        return ref::class.memberProperties.map {
-            val state = states[ref.javaClass.simpleName to it.name]
+        val currentRef = ref.get() ?: throw IllegalStateException("No reference set for the current thread.")
+        return currentRef::class.memberProperties.map {
+            val state = states.get()[currentRef.javaClass.simpleName to it.name]
             val initialized = (state is State.Initialized)
             val value = if (initialized) state.value else "Uninitialized"
             "<${it.name}>, initialized: <$initialized>, value: <$value>"

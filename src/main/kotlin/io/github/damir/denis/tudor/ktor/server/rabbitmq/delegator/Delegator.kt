@@ -53,8 +53,4 @@ internal class Delegator<T : Any> {
             state = state
         )
     }
-
-    companion object {
-
-    }
 }

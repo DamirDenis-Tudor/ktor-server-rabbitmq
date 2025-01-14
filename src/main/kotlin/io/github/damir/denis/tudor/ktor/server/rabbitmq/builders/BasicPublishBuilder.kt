@@ -6,12 +6,12 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-@KabbitMQDslMarker
-class KabbitMQBasicPublishBuilder(
+@RabbitDslMarker
+class BasicPublishBuilder(
     private val channel: Channel,
 ) {
     var exchange: String by Delegator()
@@ -27,17 +27,17 @@ class KabbitMQBasicPublishBuilder(
         properties = BasicProperties()
     }
 
-    @KabbitMQDslMarker
+    @RabbitDslMarker
     inline fun <reified T> message(block: () -> T) {
         message = Json.encodeToString(block()).toByteArray(Charsets.UTF_8)
     }
 
-    @KabbitMQDslMarker
+    @RabbitDslMarker
     inline fun <reified T> message(block: T) {
         message = Json.encodeToString(block).toByteArray(Charsets.UTF_8)
     }
 
-    fun build() = delegatorScope(on = this@KabbitMQBasicPublishBuilder) {
+    fun build() = delegatorScope(on = this@BasicPublishBuilder) {
         return@delegatorScope when {
             verify(::exchange, ::routingKey, ::message, ::mandatory, ::immediate, ::properties) -> {
                 channel.basicPublish(
