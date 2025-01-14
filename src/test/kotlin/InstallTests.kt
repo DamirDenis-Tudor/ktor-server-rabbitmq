@@ -2,7 +2,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import kotlinx.io.files.FileNotFoundException
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
 
 class InstallTests {
