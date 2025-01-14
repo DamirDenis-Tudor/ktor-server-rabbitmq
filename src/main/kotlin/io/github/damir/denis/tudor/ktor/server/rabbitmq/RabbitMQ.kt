@@ -17,11 +17,10 @@ val RabbitMQ = createApplicationPlugin(
     configurationPath = "ktor.rabbitmq",
     createConfiguration = ::ConnectionConfig
 ) {
+    pluginConfig.verify()
+
     with(ConnectionManager(pluginConfig)) {
-        pluginConfig.verify()
-
         ConnectionConfig.service = this
-
         application.attributes.put(ConnectionManagerKey, this)
     }
 }

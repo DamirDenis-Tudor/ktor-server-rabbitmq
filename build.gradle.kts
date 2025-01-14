@@ -39,8 +39,21 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     // testing
+    testImplementation("io.mockk:mockk:1.13.16")
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+
+    testImplementation("org.testcontainers:rabbitmq:1.20.4")
+    testImplementation("org.testcontainers:testcontainers:1.20.4")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.4")
+
+}
+
+tasks {
+    test {
+        useJUnitPlatform()
+    }
 }
 
 tasks.register<Jar>("javadocJar") {
