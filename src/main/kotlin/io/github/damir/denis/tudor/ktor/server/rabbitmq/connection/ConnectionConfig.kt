@@ -1,4 +1,4 @@
-package io.github.damir.denis.tudor.ktor.server.rabbitmq.service
+package io.github.damir.denis.tudor.ktor.server.rabbitmq.connection
 
 import io.ktor.server.config.*
 
@@ -11,9 +11,9 @@ import io.ktor.server.config.*
  * @author Damir Denis-Tudor
  * @version 0.1.0
  */
-class KabbitMQConfig(config: ApplicationConfig) {
+class ConnectionConfig(config: ApplicationConfig) {
     companion object{
-        lateinit var service: KabbitMQService
+        lateinit var service: ConnectionManager
     }
     var uri: String = config.tryGetString("uri") ?: "amqp://guest:guest@localhost:5672"
     var defaultConnectionName: String = config.tryGetString("defaultConnectionName") ?: "default_connection"
@@ -25,4 +25,13 @@ class KabbitMQConfig(config: ApplicationConfig) {
     var tlsKeystorePassword: String = config.tryGetString("tls.keystorePassword") ?: ""
     var tlsTruststorePath: String = config.tryGetString("tls.truststorePath") ?: ""
     var tlsTruststorePassword: String = config.tryGetString("tls.truststorePassword") ?: ""
+
+    fun verify(){
+        if (tlsEnabled){
+            require(tlsKeystorePath.isNotEmpty()){ "tlsKeystorePath cannot be empty, tlsEnabled: $tlsEnabled" }
+            require(tlsKeystorePassword.isNotEmpty()){ "tlsKeystorePassword cannot be empty, tlsEnabled: $tlsEnabled" }
+            require(tlsTruststorePath.isNotEmpty()){ "tlsTruststorePath cannot be empty, tlsEnabled: $tlsEnabled" }
+            require(tlsTruststorePassword.isNotEmpty()){ "tlsTruststorePassword cannot be empty, tlsEnabled: $tlsEnabled" }
+        }
+    }
 }

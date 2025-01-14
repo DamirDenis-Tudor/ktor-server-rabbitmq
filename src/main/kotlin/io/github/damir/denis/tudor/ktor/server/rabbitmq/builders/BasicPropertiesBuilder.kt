@@ -4,11 +4,11 @@ import com.rabbitmq.client.AMQP
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import java.util.*
 
-@KabbitMQDslMarker
-class KabbitMQBasicPropertiesBuilder {
+@RabbitDslMarker
+class BasicPropertiesBuilder {
 
     private val builder = AMQP.BasicProperties.Builder()
 
@@ -28,7 +28,7 @@ class KabbitMQBasicPropertiesBuilder {
     var clusterId: String by Delegator()
 
     fun build(): AMQP.BasicProperties {
-        delegatorScope(on = this@KabbitMQBasicPropertiesBuilder) {
+        delegatorScope(on = this@BasicPropertiesBuilder) {
             when {
                 verify(::contentType) -> builder.contentType(contentType)
                 verify(::contentEncoding) -> builder.contentEncoding(contentEncoding)

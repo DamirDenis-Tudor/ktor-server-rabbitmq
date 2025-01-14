@@ -1,22 +1,26 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.GetResponse
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
-@KabbitMQDslMarker
-class KabbitMQBasicGetBuilder(private val channel: Channel) {
-    var queue: String by Delegator()
-    var autoAck: Boolean by Delegator()
 
-    fun build(): GetResponse = delegatorScope(on = this@KabbitMQBasicGetBuilder) {
+@RabbitDslMarker
+class BasicAckBuilder(private val channel: Channel) {
+    var deliveryTag: Long by Delegator()
+    var multiple: Boolean by Delegator()
+
+    init {
+        multiple = false
+    }
+
+    fun build() = delegatorScope(on = this@BasicAckBuilder) {
         return@delegatorScope when {
-            verify(::queue, ::autoAck) -> {
-                channel.basicGet(queue, autoAck)
+            verify(::deliveryTag, ::multiple) -> {
+                channel.basicAck(deliveryTag, multiple)
             }
 
             else -> error(stateTrace())

@@ -6,27 +6,27 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
-@KabbitMQDslMarker
-class KabbitMQQueueBindBuilder(private val channel: Channel) {
+@RabbitDslMarker
+class QueueDeclareBuilder(private val channel: Channel) {
     var queue: String by Delegator()
-    var exchange: String by Delegator()
-    var routingKey: String by Delegator()
+    var durable: Boolean by Delegator()
+    var exclusive: Boolean by Delegator()
+    var autoDelete: Boolean by Delegator()
     var arguments: Map<String, Any> by Delegator()
 
     init {
-        routingKey = ""
+        durable = true
+        exclusive = false
+        autoDelete = false
+        arguments = emptyMap()
     }
 
-    fun build(): AMQP.Queue.BindOk = delegatorScope(on = this@KabbitMQQueueBindBuilder) {
+    fun build(): AMQP.Queue.DeclareOk = delegatorScope(on = this@QueueDeclareBuilder) {
         return@delegatorScope when {
-            verify(::queue, ::exchange, ::routingKey,::arguments) -> {
-                channel.queueBind(queue, exchange, routingKey, arguments)
-            }
-
-            verify(::queue, ::exchange, ::routingKey) -> {
-                channel.queueBind(queue, exchange, routingKey)
+            verify(::queue, ::durable, ::exclusive, ::autoDelete, ::arguments) -> {
+                channel.queueDeclare(queue, durable, exclusive, autoDelete, arguments)
             }
 
             else -> error(stateTrace())

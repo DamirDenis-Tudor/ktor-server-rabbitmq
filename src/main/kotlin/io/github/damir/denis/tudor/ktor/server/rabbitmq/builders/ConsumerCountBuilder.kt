@@ -5,19 +5,21 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
-@KabbitMQDslMarker
-class KabbitMQMessageCountBuilder(private val channel: Channel) {
+
+@RabbitDslMarker
+class ConsumerCountBuilder(private val channel: Channel) {
     var queue: String by Delegator()
 
-    fun build(): Long = delegatorScope(on = this@KabbitMQMessageCountBuilder) {
+    fun build(): Long = delegatorScope(on = this@ConsumerCountBuilder)
+    {
         return@delegatorScope when {
             verify(::queue) -> {
-                channel.messageCount(queue)
+                channel.consumerCount(queue)
             }
+
             else -> error(stateTrace())
         }
     }
-
 }

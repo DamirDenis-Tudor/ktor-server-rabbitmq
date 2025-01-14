@@ -6,25 +6,25 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
-@KabbitMQDslMarker
-class KabbitMQExchangeDeleteBuilder(private val channel: Channel) {
-    var exchange: String by Delegator()
+@RabbitDslMarker
+class QueueDeleteBuilder(private val channel: Channel) {
+    var queue: String by Delegator()
     var ifUnused: Boolean by Delegator()
+    var ifEmpty: Boolean by Delegator()
 
-    init {
-        ifUnused = false
-    }
-
-    fun build(): AMQP.Exchange.DeleteOk = delegatorScope(on = this@KabbitMQExchangeDeleteBuilder) {
+    fun build(): AMQP.Queue.DeleteOk = delegatorScope(on = this@QueueDeleteBuilder) {
         return@delegatorScope when {
-            verify(::exchange, ::ifUnused) -> {
-                channel.exchangeDelete(exchange, ifUnused)
+            verify(::queue, ::ifUnused, ::ifEmpty) -> {
+                channel.queueDelete(queue, ifUnused, ifEmpty)
+            }
+
+            verify(::queue) -> {
+                channel.queueDelete(queue)
             }
 
             else -> error(stateTrace())
         }
     }
-
 }

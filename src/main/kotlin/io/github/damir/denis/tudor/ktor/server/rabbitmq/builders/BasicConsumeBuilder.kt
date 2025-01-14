@@ -5,11 +5,11 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import kotlinx.serialization.json.Json
 
-@KabbitMQDslMarker
-class KabbitMQBasicConsumeBuilder(
+@RabbitDslMarker
+class BasicConsumeBuilder(
     private val channel: Channel,
 ) {
     var noLocal: Boolean by Delegator()
@@ -35,7 +35,7 @@ class KabbitMQBasicConsumeBuilder(
         }
     }
 
-    @KabbitMQDslMarker
+    @RabbitDslMarker
     inline fun <reified T> deliverCallback(crossinline callback: (tag: Long, message: T) -> Unit) {
         deliverCallback = DeliverCallback { _, delivery ->
             callback(
@@ -47,32 +47,22 @@ class KabbitMQBasicConsumeBuilder(
         }
     }
 
-    @KabbitMQDslMarker
+    @RabbitDslMarker
     fun cancelCallback(callback: (tag: String) -> Unit) {
         cancelCallback = CancelCallback { consumerTag ->
             callback(consumerTag)
         }
     }
 
-    @KabbitMQDslMarker
+    @RabbitDslMarker
     fun shutdownSignalCallback(callback: (tag: String, sig: ShutdownSignalException) -> Unit) {
         shutdownSignalCallback = ConsumerShutdownSignalCallback { consumerTag, sig ->
             callback(consumerTag, sig)
         }
     }
 
-    fun build(): String = delegatorScope(on = this@KabbitMQBasicConsumeBuilder) {
+    fun build(): String = delegatorScope(on = this@BasicConsumeBuilder) {
         return@delegatorScope when {
-            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback ) -> {
-                channel.basicConsume(
-                    queue,
-                    autoAck,
-                    consumerTag,
-                    deliverCallback,
-                    cancelCallback
-                )
-            }
-
             verify(::queue, ::autoAck, ::consumerTag, ::noLocal, ::exclusive, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
@@ -98,6 +88,18 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
+            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback ) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    consumerTag,
+                    deliverCallback,
+                    cancelCallback
+                )
+            }
+
+
+
             verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
@@ -115,6 +117,16 @@ class KabbitMQBasicConsumeBuilder(
                     arguments,
                     deliverCallback,
                     shutdownSignalCallback
+                )
+            }
+
+            verify(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback) -> {
+                channel.basicConsume(
+                    queue,
+                    autoAck,
+                    arguments,
+                    deliverCallback,
+                    cancelCallback
                 )
             }
 
@@ -140,16 +152,6 @@ class KabbitMQBasicConsumeBuilder(
                 channel.basicConsume(
                     queue,
                     autoAck,
-                    deliverCallback,
-                    cancelCallback
-                )
-            }
-
-            verify(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback) -> {
-                channel.basicConsume(
-                    queue,
-                    autoAck,
-                    arguments,
                     deliverCallback,
                     cancelCallback
                 )
