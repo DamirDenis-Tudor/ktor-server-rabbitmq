@@ -1,12 +1,12 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 @KabbitMQDslMarker
 class KabbitMQExchangeDeleteBuilder(private val channel: Channel) {
@@ -17,13 +17,13 @@ class KabbitMQExchangeDeleteBuilder(private val channel: Channel) {
         ifUnused = false
     }
 
-    fun build(): AMQP.Exchange.DeleteOk = withThisRef(this@KabbitMQExchangeDeleteBuilder) {
-        return@withThisRef when {
-            initialized(::exchange, ::ifUnused) -> {
+    fun build(): AMQP.Exchange.DeleteOk = delegatorScope(on = this@KabbitMQExchangeDeleteBuilder) {
+        return@delegatorScope when {
+            verify(::exchange, ::ifUnused) -> {
                 channel.exchangeDelete(exchange, ifUnused)
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 

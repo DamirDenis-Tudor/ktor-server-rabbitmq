@@ -1,13 +1,13 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 @KabbitMQDslMarker
 class KabbitMQExchangeDeclareBuilder(private val channel: Channel) {
@@ -26,13 +26,13 @@ class KabbitMQExchangeDeclareBuilder(private val channel: Channel) {
         arguments = emptyMap()
     }
 
-    fun build(): AMQP.Exchange.DeclareOk = withThisRef(this@KabbitMQExchangeDeclareBuilder) {
-        return@withThisRef when {
-            initialized(::exchange, ::type, ::durable, ::autoDelete, ::internal, ::arguments) -> {
+    fun build(): AMQP.Exchange.DeclareOk = delegatorScope(on = this@KabbitMQExchangeDeclareBuilder) {
+        return@delegatorScope when {
+            verify(::exchange, ::type, ::durable, ::autoDelete, ::internal, ::arguments) -> {
                 channel.exchangeDeclare(exchange, type, durable, autoDelete, internal, arguments)
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 }

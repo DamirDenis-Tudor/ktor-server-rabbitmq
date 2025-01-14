@@ -1,11 +1,11 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 
 @KabbitMQDslMarker
@@ -17,13 +17,13 @@ class KabbitMQBasicAckBuilder(private val channel: Channel) {
         multiple = false
     }
 
-    fun build() = withThisRef(this@KabbitMQBasicAckBuilder) {
-        return@withThisRef when {
-            initialized(::deliveryTag, ::multiple) -> {
+    fun build() = delegatorScope(on = this@KabbitMQBasicAckBuilder) {
+        return@delegatorScope when {
+            verify(::deliveryTag, ::multiple) -> {
                 channel.basicAck(deliveryTag, multiple)
             }
 
-            else -> reportStateTrace()
+            else -> error(stateTrace())
         }
     }
 }

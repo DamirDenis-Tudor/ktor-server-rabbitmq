@@ -1,18 +1,17 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import kotlinx.serialization.json.Json
 
 @KabbitMQDslMarker
 class KabbitMQBasicConsumeBuilder(
     private val channel: Channel,
 ) {
-
     var noLocal: Boolean by Delegator()
     var exclusive: Boolean by Delegator()
     var arguments: Map<String, Any> by Delegator()
@@ -62,9 +61,9 @@ class KabbitMQBasicConsumeBuilder(
         }
     }
 
-    fun build(): String = withThisRef(this@KabbitMQBasicConsumeBuilder) {
-        return@withThisRef when {
-            initialized(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback ) -> {
+    fun build(): String = delegatorScope(on = this@KabbitMQBasicConsumeBuilder) {
+        return@delegatorScope when {
+            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback ) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -74,7 +73,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::consumerTag, ::noLocal, ::exclusive, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+            verify(::queue, ::autoAck, ::consumerTag, ::noLocal, ::exclusive, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -88,7 +87,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+            verify(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -99,7 +98,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
+            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -109,7 +108,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::arguments, ::deliverCallback, ::shutdownSignalCallback) -> {
+            verify(::queue, ::autoAck, ::arguments, ::deliverCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -119,7 +118,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::deliverCallback, ::shutdownSignalCallback) -> {
+            verify(::queue, ::autoAck, ::deliverCallback, ::shutdownSignalCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -128,7 +127,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::deliverCallback, ::cancelCallback) -> {
+            verify(::queue, ::autoAck, ::deliverCallback, ::cancelCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -137,7 +136,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::deliverCallback, ::cancelCallback) -> {
+            verify(::queue, ::autoAck, ::deliverCallback, ::cancelCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -146,7 +145,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            initialized(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback) -> {
+            verify(::queue, ::autoAck, ::arguments, ::deliverCallback, ::cancelCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -156,7 +155,7 @@ class KabbitMQBasicConsumeBuilder(
                 )
             }
 
-            else -> error(reportStateTrace(this@KabbitMQBasicConsumeBuilder))
+            else -> error(stateTrace())
         }
     }
 }

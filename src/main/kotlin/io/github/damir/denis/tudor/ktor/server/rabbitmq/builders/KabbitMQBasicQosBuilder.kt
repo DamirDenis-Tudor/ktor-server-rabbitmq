@@ -1,11 +1,11 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.initialized
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.reportStateTrace
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator.Companion.withThisRef
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 import com.rabbitmq.client.Channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.KabbitMQDslMarker
 
 
 @KabbitMQDslMarker
@@ -14,21 +14,21 @@ class KabbitMQBasicQosBuilder(private val channel: Channel) {
     var prefetchCount: Int by Delegator()
     var global: Boolean by Delegator()
 
-    fun build() = withThisRef(this@KabbitMQBasicQosBuilder) {
-        return@withThisRef when {
-            initialized(::prefetchCount, ::prefetchCount, ::global) -> {
+    fun build() = delegatorScope(on = this@KabbitMQBasicQosBuilder) {
+        return@delegatorScope when {
+            verify(::prefetchCount, ::prefetchCount, ::global) -> {
                 channel.basicQos(prefetchSize, prefetchCount, global)
             }
 
-            initialized(::prefetchCount, ::global) -> {
+            verify(::prefetchCount, ::global) -> {
                 channel.basicQos(prefetchCount, global)
             }
 
-            initialized(::prefetchCount) -> {
+            verify(::prefetchCount) -> {
                 channel.basicQos(prefetchCount)
             }
 
-            else -> error(reportStateTrace())
+            else -> error(stateTrace())
         }
     }
 }
