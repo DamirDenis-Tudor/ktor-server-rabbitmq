@@ -21,7 +21,7 @@ class QueueBindBuilder(private val channel: Channel) {
 
     fun build(): AMQP.Queue.BindOk = delegatorScope(on = this@QueueBindBuilder) {
         return@delegatorScope when {
-            verify(::queue, ::exchange, ::routingKey,::arguments) -> {
+            verify(::queue, ::exchange, ::routingKey, ::arguments) -> {
                 channel.queueBind(queue, exchange, routingKey, arguments)
             }
 
@@ -29,7 +29,10 @@ class QueueBindBuilder(private val channel: Channel) {
                 channel.queueBind(queue, exchange, routingKey)
             }
 
-            else -> error(stateTrace())
+            else -> {
+                println(stateTrace())
+                error("Unexpected combination of parameters")
+            }
         }
     }
 }

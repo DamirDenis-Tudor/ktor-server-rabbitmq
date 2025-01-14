@@ -56,9 +56,10 @@ object StateRegistry {
         return try {
             block()
         } finally {
-            ref.remove()
+
             logger.set(defaultLogger)
-            states.remove()
+            states.set(states.get().filter { it.key.first != ref.get()?.javaClass?.name }.toMutableMap())
+            ref.remove()
         }
     }
 
@@ -69,10 +70,10 @@ object StateRegistry {
      * @return true if all properties are initialized, false otherwise.
      */
     fun verify(vararg properties: KProperty<*>): Boolean {
-        ref.get()?.let {
+        ref.get()?.let { currentRef ->
             return properties.all {
-                states.get().getOrPut(it.javaClass.simpleName to it.name)
-                { State.Uninitialized } !is State.Uninitialized
+                states.get()
+                    .getOrPut(currentRef.javaClass.name to it.name) { State.Uninitialized } !is State.Uninitialized
             }
         } ?: error("No reference set for the current thread.")
     }
@@ -83,13 +84,13 @@ object StateRegistry {
      *
      * @return a list of strings representing the state and value of each property.
      */
-    fun stateTrace(): List<String> {
+    fun stateTrace(): String {
         val currentRef = ref.get() ?: throw IllegalStateException("No reference set for the current thread.")
-        return currentRef::class.memberProperties.map {
-            val state = states.get()[currentRef.javaClass.simpleName to it.name]
+        return currentRef::class.memberProperties.joinToString("\n") {
+            val state = states.get()[currentRef.javaClass.name to it.name]
             val initialized = (state is State.Initialized)
             val value = if (initialized) state.value else "Uninitialized"
-            "<${it.name}>, initialized: <$initialized>, value: <$value>"
+            "<${ref.get()?.javaClass?.simpleName}> <${it.name}>, value: <$value>"
         }
     }
 }
