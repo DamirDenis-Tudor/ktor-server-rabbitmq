@@ -9,7 +9,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator
  * @author Damir Denis-Tudor
  * @version 0.1.0
  */
-internal sealed class State<out T> {
+sealed class State<out T> {
     /**
      * Represents an initialized state with a value.
      *
