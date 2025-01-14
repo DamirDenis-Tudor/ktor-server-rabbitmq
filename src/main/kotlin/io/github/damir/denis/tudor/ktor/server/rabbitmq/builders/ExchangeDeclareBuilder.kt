@@ -13,7 +13,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 class ExchangeDeclareBuilder(private val channel: Channel) {
 
     var exchange: String by Delegator()
-    var type: BuiltinExchangeType by Delegator()
+    var type: String by Delegator()
     var durable: Boolean by Delegator()
     var autoDelete: Boolean by Delegator()
     var internal: Boolean by Delegator()
