@@ -4,13 +4,15 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitmq
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
 import kotlin.test.assertNotEquals
+
 
 class ConnectionTests {
 
@@ -43,9 +45,10 @@ class ConnectionTests {
                 uri = rabbitMQContainer.amqpUrl
             }
         }
-
         application {
-            rabbitmq {}
+            runTest {
+                rabbitmq {}
+            }
         }
     }
 
@@ -61,10 +64,12 @@ class ConnectionTests {
 
         application {
             rabbitmq {
-                val connection1 = connection( id = "connection_1") {}
-                val connection1Reused = connection( id = "connection_1") {}
+                runTest {
+                    val connection1 = connection(id = "connection_1") {}
+                    val connection1Reused = connection(id = "connection_1") {}
 
-                Assertions.assertEquals(connection1Reused, connection1)
+                    assertEquals(connection1Reused, connection1)
+                }
             }
         }
     }
@@ -81,10 +86,12 @@ class ConnectionTests {
 
         application {
             rabbitmq {
-                val channel = channel( id = 99) {}
-                val channelReused = channel( id = 99) {}
+                runTest {
+                    val channel = channel(id = 99) {}
+                    val channelReused = channel(id = 99) {}
 
-                Assertions.assertEquals(channel, channelReused)
+                    assertEquals(channel, channelReused)
+                }
             }
         }
     }
@@ -101,11 +108,14 @@ class ConnectionTests {
 
         application {
             rabbitmq {
-                val channel1 = channel( id = 99, autoClose = true) {}
-                val channel2 = channel( id = 99 ) {}
+                runTest {
+                    val channel1 = channel(id = 99, autoClose = true) {}
+                    val channel2 = channel(id = 99) {}
 
-                assertNotEquals(channel1, channel2)
+                    assertNotEquals(channel1, channel2)
+                }
             }
         }
     }
 }
+
