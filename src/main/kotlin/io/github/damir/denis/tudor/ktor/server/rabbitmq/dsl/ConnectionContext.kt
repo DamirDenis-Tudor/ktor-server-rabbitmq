@@ -10,15 +10,15 @@ import kotlin.random.Random
 class ConnectionContext(val connectionManager: ConnectionManager, val connection: Connection)
 
 @RabbitDslMarker
-suspend inline fun ConnectionContext.channel(
+inline fun ConnectionContext.channel(
     id: Int,
     autoClose: Boolean = false,
     crossinline block: ChannelContext.() -> Unit
-): Channel = withContext(Dispatchers.IO) {
+): Channel {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
         val channelId = id
-        return@withContext connectionManager.getChannel(channelId, connectionId)
+        return connectionManager.getChannel(channelId, connectionId)
             .also {
                 ChannelContext(it).apply(block).apply {
                     if (autoClose) {
@@ -30,13 +30,13 @@ suspend inline fun ConnectionContext.channel(
 }
 
 @RabbitDslMarker
-suspend inline fun ConnectionContext.channel(
+inline fun ConnectionContext.channel(
     crossinline block: ChannelContext.() -> Unit
-): Channel = withContext(Dispatchers.IO) {
+): Channel {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
         val channelId = Random.nextInt(100000, 100000000)
-        return@withContext connectionManager.getChannel(channelId, connectionId)
+        return connectionManager.getChannel(channelId, connectionId)
             .also {
                 ChannelContext(it).apply(block).apply {
                     closeChannel(channelId, connectionId)
@@ -46,13 +46,13 @@ suspend inline fun ConnectionContext.channel(
 }
 
 @RabbitDslMarker
-suspend inline fun ConnectionContext.libChannel(
+inline fun ConnectionContext.libChannel(
     crossinline block: Channel.() -> Unit
-): Channel = withContext(Dispatchers.IO) {
+): Channel {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
         val channelId = Random.nextInt(100000, 100000000)
-        return@withContext connectionManager.getChannel(channelId, connectionId)
+        return connectionManager.getChannel(channelId, connectionId)
             .also {
                 it.apply(block).apply {
                     closeChannel(channelId, connectionId)

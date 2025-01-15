@@ -27,7 +27,11 @@ repositories {
 
 dependencies {
     // ktor
-    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+
+    // coroutines
+    runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
     //serializing
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxVersion")
@@ -122,12 +126,20 @@ jreleaser {
             token = githubToken
 
             changelog {
+
                 enabled = true
                 setFormatted("ALWAYS")
                 preset = "conventional-commits"
                 extraProperties = mapOf("categorizeScopes" to true)
                 contributors{
                     enabled = false
+                }
+                append {
+                    setTarget("build/jreleaser/release/CHANGELOG.md")
+                    enabled = true
+                    content = """## Maven artifacts
+                         - [ktor-server-rabbitmq:$version](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq/$version)
+                         """
                 }
             }
         }

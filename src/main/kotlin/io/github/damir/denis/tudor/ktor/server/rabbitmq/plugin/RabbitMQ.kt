@@ -1,14 +1,16 @@
-package io.github.damir.denis.tudor.ktor.server.rabbitmq
+package io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin
 
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionConfig
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.ChannelContext
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.PluginContext
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import io.ktor.server.application.*
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
+import io.ktor.server.routing.application
 import io.ktor.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 val ConnectionManagerKey = AttributeKey<ConnectionManager>("ConnectionManager")
 
@@ -34,14 +36,14 @@ fun Application.rabbitmq(block: PluginContext.() -> Unit) {
 
 @RabbitDslMarker
 fun Routing.rabbitmq(block: PluginContext.() -> Unit) {
-    with(attributes[ConnectionManagerKey]) {
+    with(application.attributes[ConnectionManagerKey]) {
         PluginContext(this).apply(block)
     }
 }
 
 @RabbitDslMarker
 fun Route.rabbitmq(block: PluginContext.() -> Unit) {
-    with(attributes[ConnectionManagerKey]) {
+    with(application.attributes[ConnectionManagerKey]) {
         PluginContext(this).apply(block)
     }
 }

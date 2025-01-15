@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get next version
         uses: reecetech/version-increment@2024.10.1

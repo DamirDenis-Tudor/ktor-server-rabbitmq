@@ -9,12 +9,12 @@ import kotlinx.coroutines.withContext
 class PluginContext(val connectionManager: ConnectionManager) : ChannelContext(connectionManager.getChannel())
 
 @RabbitDslMarker
-suspend fun PluginContext.channel(
+fun PluginContext.channel(
     id: Int,
     autoClose: Boolean = false,
-    block: suspend ChannelContext.() -> Unit
-): Channel = withContext(Dispatchers.IO) {
-    connectionManager.getChannel(id)
+    block: ChannelContext.() -> Unit
+): Channel {
+    return connectionManager.getChannel(id)
         .also {
             ChannelContext(it).apply { block() }
             if (autoClose) connectionManager.closeChannel(id)
@@ -22,12 +22,12 @@ suspend fun PluginContext.channel(
 }
 
 @RabbitDslMarker
-suspend fun PluginContext.connection(
+fun PluginContext.connection(
     id: String,
     autoClose: Boolean = false,
-    block: suspend ConnectionContext.() -> Unit
-): Connection = withContext(Dispatchers.IO) {
-    connectionManager.getConnection(id)
+    block: ConnectionContext.() -> Unit
+): Connection {
+    return connectionManager.getConnection(id)
         .also {
             ConnectionContext(connectionManager, it).apply { block() }
             if (autoClose) connectionManager.closeConnection(id)
@@ -35,12 +35,12 @@ suspend fun PluginContext.connection(
 }
 
 @RabbitDslMarker
-suspend fun PluginContext.libConnection(
+fun PluginContext.libConnection(
     id: String,
     autoClose: Boolean = false,
-    block: suspend Connection.() -> Unit
-): Connection = withContext(Dispatchers.IO) {
-    connectionManager.getConnection(id)
+    block: Connection.() -> Unit
+): Connection  {
+    return connectionManager.getConnection(id)
         .also {
             it.apply { block() }
             if (autoClose) connectionManager.closeConnection(id)

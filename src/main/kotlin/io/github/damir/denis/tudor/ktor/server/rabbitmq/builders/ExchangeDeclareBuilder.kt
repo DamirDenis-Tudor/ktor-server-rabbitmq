@@ -1,11 +1,10 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
 import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Channel
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
@@ -32,7 +31,10 @@ class ExchangeDeclareBuilder(private val channel: Channel) {
                 channel.exchangeDeclare(exchange, type, durable, autoDelete, internal, arguments)
             }
 
-            else -> error(stateTrace())
+            else -> {
+                logStateTrace()
+                error("Unexpected combination of parameters")
+            }
         }
     }
 }
