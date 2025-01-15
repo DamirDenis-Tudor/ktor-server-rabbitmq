@@ -20,7 +20,7 @@ inline fun ConnectionContext.channel(
         val channelId = id
         return connectionManager.getChannel(channelId, connectionId)
             .also {
-                ChannelContext(it).apply(block).apply {
+                ChannelContext(connectionManager, it).apply(block).apply {
                     if (autoClose) {
                         closeChannel(id)
                     }
@@ -35,10 +35,10 @@ inline fun ConnectionContext.channel(
 ): Channel {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
-        val channelId = Random.nextInt(100000, 100000000)
+        val channelId = Random.nextInt(1000, 2000)
         return connectionManager.getChannel(channelId, connectionId)
             .also {
-                ChannelContext(it).apply(block).apply {
+                ChannelContext(connectionManager, it).apply(block).apply {
                     closeChannel(channelId, connectionId)
                 }
             }
