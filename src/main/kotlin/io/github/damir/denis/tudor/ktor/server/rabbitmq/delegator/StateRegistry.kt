@@ -51,7 +51,9 @@ object StateRegistry {
      */
     fun <T : Any> delegatorScope(on: Any, block: () -> T): T {
         ref.set(on)
+
         logger.set(KtorSimpleLogger(on.javaClass.name))
+        logger.get().trace("DelegatorScope used for <${on.javaClass.simpleName}>.")
 
         return try {
             block()
@@ -87,7 +89,7 @@ object StateRegistry {
     fun logStateTrace() {
         val currentRef = ref.get() ?: throw IllegalStateException("No reference set for the current thread.")
 
-        logger.get().debug("<${ref.get()?.javaClass?.simpleName}> State trace.")
+        logger.get().trace("<${ref.get()?.javaClass?.simpleName}> State trace.")
 
         currentRef::class.memberProperties.map {
             val state = states.get()[currentRef.javaClass.name to it.name]

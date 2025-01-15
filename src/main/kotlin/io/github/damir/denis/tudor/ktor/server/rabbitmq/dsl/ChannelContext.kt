@@ -1,65 +1,80 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 
 import com.rabbitmq.client.Channel
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicAckBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicConsumeBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicGetBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicNackBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicPublishBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicQosBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.BasicRejectBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.ConsumerCountBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.ExchangeDeclareBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.ExchangeDeleteBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.MessageCountBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.QueueBindBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.QueueDeclareBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.QueueDeleteBuilder
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.QueueUnbindBuilder
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-open class ChannelContext(val channel: Channel)
+open class ChannelContext(
+    open val connectionManager: ConnectionManager,
+    val channel: Channel
+)
 
 @RabbitDslMarker
-fun ChannelContext.basicAck(block: BasicAckBuilder.() -> Unit) = BasicAckBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) =
+    withContext(Dispatchers.IO) { BasicAckBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.basicConsume(block: BasicConsumeBuilder.() -> Unit) = BasicConsumeBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() -> Unit) {
+    with(connectionManager) {
+        withContext(dispatcher) {
+            coroutineScope.launch(dispatcher) {
+                BasicConsumeBuilder(this@with, channel).apply { this.block() }.build()
+            }
+        }
+    }
+}
 
 @RabbitDslMarker
-fun ChannelContext.basicGet(block: BasicGetBuilder.() -> Unit) = BasicGetBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { BasicGetBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.basicNack(block: BasicNackBuilder.() -> Unit) = BasicNackBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { BasicNackBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.basicPublish(block: BasicPublishBuilder.() -> Unit) = BasicPublishBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { BasicPublishBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.basicQos(block: BasicQosBuilder.() -> Unit) = BasicQosBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { BasicQosBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.basicReject(block: BasicRejectBuilder.() -> Unit) = BasicRejectBuilder(channel).apply(block).build()
+suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { BasicRejectBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.consumerCount(block: ConsumerCountBuilder.() -> Unit) = ConsumerCountBuilder(channel).apply(block).build()
+suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { ConsumerCountBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.exchangeDeclare(block: ExchangeDeclareBuilder.() -> Unit) = ExchangeDeclareBuilder(channel).apply(block).build()
+suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { ExchangeDeclareBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.exchangeDelete(block: ExchangeDeleteBuilder.() -> Unit) = ExchangeDeleteBuilder(channel).apply(block).build()
+suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { ExchangeDeleteBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.messageCount(block: MessageCountBuilder.() -> Unit) = MessageCountBuilder(channel).apply(block).build()
+suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { MessageCountBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.queueBind(block: QueueBindBuilder.() -> Unit) = QueueBindBuilder(channel).apply(block).build()
+suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { QueueBindBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.queueDeclare(block: QueueDeclareBuilder.() -> Unit) = QueueDeclareBuilder(channel).apply(block).build()
+suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { QueueDeclareBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.queueDelete(block: QueueDeleteBuilder.() -> Unit) = QueueDeleteBuilder(channel).apply(block).build()
+suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { QueueDeleteBuilder(channel).apply { this.block() }.build() }
 
 @RabbitDslMarker
-fun ChannelContext.queueUnbind(block: QueueUnbindBuilder.() -> Unit) = QueueUnbindBuilder(channel).apply(block).build()
+suspend fun ChannelContext.queueUnbind(block: suspend QueueUnbindBuilder.() -> Unit) =
+    withContext(connectionManager.dispatcher) { QueueUnbindBuilder(channel).apply { this.block() }.build() }

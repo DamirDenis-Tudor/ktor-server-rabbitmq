@@ -1,56 +1,59 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.basicPublish
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.channel
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.exchangeDeclare
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.queueBind
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.queueDeclare
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.rabbitmq
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.util.logging.*
 
 internal fun Application.module() {
-    install(RabbitMQ){
+    val logger = KtorSimpleLogger("demo")
+
+    install(RabbitMQ) {
         uri = "amqp://guest:guest@localhost:5672"
+        dispatcherThreadPollSize = 2
     }
 
-    routing {
-        rabbitmq {
+    Thread.sleep(2_000)
 
-            get {
-                channel(id = 0) {
-
-                }
-
+    rabbitmq {
+        queueBind {
+            queue = "demo-queue"
+            exchange = "demo-exchange"
+            routingKey = "demo-routing-key"
+            queueDeclare {
+                queue = "demo-queue"
+                durable = true
+            }
+            exchangeDeclare {
+                exchange = "demo-exchange"
+                type = "direct"
             }
         }
-        rabbitmq {
-            basicPublish {
-                queueBind {
-                    queue = "demo-queue"
-                    exchange = "demo-exchange"
-                    routingKey = "demo-routing-key"
-                    queueDeclare {
-                        queue = "demo-queue"
-                        durable = true
-                    }
-                    exchangeDeclare {
-                        exchange = "demo-exchange"
-                        type = "direct"
-                    }
-                }
+    }
 
+    rabbitmq {
+        repeat(1_000_000) {
+            basicPublish {
                 exchange = "demo-exchange"
                 routingKey = "demo-routing-key"
                 message { "Hello World!" }
+                logger.info("Publish")
             }
         }
     }
 
+    rabbitmq {
+        basicConsume {
+            autoAck = true
+            queue = "demo-queue"
+            deliverCallback<String> { tag, message ->
+                logger.info("Received message: $message")
+            }
+        }
+    }
 }
 
 internal fun main() {

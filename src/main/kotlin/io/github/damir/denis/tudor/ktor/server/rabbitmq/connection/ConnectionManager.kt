@@ -4,10 +4,14 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import io.ktor.util.logging.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.FileInputStream
 import java.lang.Thread.sleep
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
@@ -21,7 +25,10 @@ import javax.net.ssl.TrustManagerFactory
  *
  * @param config the configuration object containing RabbitMQ connection settings.
  */
-open class ConnectionManager(private val config: ConnectionConfig) {
+open class ConnectionManager(
+    private val scope: CoroutineScope,
+    private val config: ConnectionConfig
+) {
     private val connectionFactory = ConnectionFactory()
 
     private val channelCache = ConcurrentHashMap<String, Channel>()
@@ -29,10 +36,27 @@ open class ConnectionManager(private val config: ConnectionConfig) {
 
     private val logger = KtorSimpleLogger(this.javaClass.name)
 
+    private val threadIdCounter = AtomicInteger(-1)
+
+    private val executor = Executors.newFixedThreadPool(config.dispatcherThreadPollSize) { runnable ->
+        val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
+
+        logger.debug("Creating new thread <$threadName> with ID <$threadName>")
+
+        Thread(runnable, threadName).apply { isDaemon = true }
+    }
+
+    val dispatcher
+        get () = executor.asCoroutineDispatcher()
+
+    val coroutineScope
+        get () = scope
+
     init {
         connectionFactory.apply {
             if (config.tlsEnabled) enableTLS()
             setUri(config.uri)
+            setSharedExecutor(executor)
         }
     }
 

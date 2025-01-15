@@ -1,15 +1,18 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
 import com.rabbitmq.client.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 @RabbitDslMarker
 class BasicConsumeBuilder(
+    val connectionManager: ConnectionManager,
     private val channel: Channel,
 ) {
     var noLocal: Boolean by Delegator()
@@ -36,14 +39,18 @@ class BasicConsumeBuilder(
     }
 
     @RabbitDslMarker
-    inline fun <reified T> deliverCallback(crossinline callback: (tag: Long, message: T) -> Unit) {
+    inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
         deliverCallback = DeliverCallback { _, delivery ->
-            callback(
-                delivery.envelope.deliveryTag,
-                Json.decodeFromString<T>(
-                    delivery.body.toString(Charsets.UTF_8)
-                )
-            )
+            with(connectionManager) {
+                coroutineScope.launch(dispatcher) {
+                    callback(
+                        delivery.envelope.deliveryTag,
+                        Json.decodeFromString<T>(
+                            delivery.body.toString(Charsets.UTF_8)
+                        )
+                    )
+                }
+            }
         }
     }
 
