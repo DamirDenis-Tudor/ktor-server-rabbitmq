@@ -1,16 +1,17 @@
 name: Deployment
 
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
-    title: ^(\d+)\.(\d+)\.(\d+)$
-  push:
-    branches:
-      - main
-    commit_message: '^(\d+)\.(\d+)\.(\d+)$'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Select version type:'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 jobs:
   deploy:
@@ -19,15 +20,12 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Set version from pull request or commit message
-        id: set_version
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            VERSION="${{ github.event.pull_request.title }}"
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
-            VERSION="${{ github.event.head_commit.message }}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Get next version
+        uses: reecetech/version-increment@2024.10.1
+        id: version
+        with:
+          scheme: semver
+          increment: ${{ github.event.inputs.version_type }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -35,7 +33,7 @@ jobs:
       - name: Prepare for publish
         run: |
           ./gradlew publish \
-            -PreleaseVersion="${{ env.VERSION }}" \
+            -PreleaseVersion="${{ steps.version.outputs.version }}" \
             -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
             -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
             -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}"
@@ -43,52 +41,7 @@ jobs:
       - name: Release in Maven Central
         run: |
           ./gradlew jreleaserRelease \
-            -PreleaseVersion="${{ env.VERSION }}" \
+            -PreleaseVersion="${{ steps.version.outputs.version }}" \
             -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
             -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
-
-  update-success:
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: success()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Update README file with success badge
-        run: |
-          if [ -f "README.md" ]; then
-            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-success-green?style=flat)|" README.md
-          else
-            echo "README.md not found, skipping README update."
-          fi
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          message: "Update README with success deployment badge"
-          branch: "main"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  update-failed:
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: failure()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Update README file with failed badge
-        run: |
-          if [ -f "README.md" ]; then
-            sed -i "s|!\\[Deployment Status\\](https://img.shields.io/badge/deployment-.*)|![Deployment Status](https://img.shields.io/badge/deployment-failed-red?style=flat)|" README.md
-          else
-            echo "README.md not found, skipping README update."
-          fi
-
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          message: "Update README with failed deployment badge"
-          branch: "main"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
