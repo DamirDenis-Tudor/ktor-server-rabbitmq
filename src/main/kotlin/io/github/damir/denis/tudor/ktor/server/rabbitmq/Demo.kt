@@ -1,5 +1,8 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq
 
+import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.DefaultConsumer
+import com.rabbitmq.client.Envelope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.rabbitmq
@@ -31,6 +34,25 @@ internal fun Application.module() {
                 exchange = "demo-exchange"
                 type = "direct"
             }
+        }
+
+        libConnection("lib_connection") {
+             with(createChannel()) {
+                 basicPublish("demo-exchange", "demo-routing-key", null, "Hello!".toByteArray())
+
+                 val consumer = object : DefaultConsumer(channel) {
+                     override fun handleDelivery(
+                         consumerTag: String?,
+                         envelope: Envelope?,
+                         properties: AMQP.BasicProperties?,
+                         body: ByteArray?
+                     ) {
+                        logger.info("Libraryyyyyyyyyyyyyyyyyyyyyy- " + body?.decodeToString())
+                     }
+                 }
+
+                 basicConsume("demo-queue", true, consumer)
+             }
         }
     }
 

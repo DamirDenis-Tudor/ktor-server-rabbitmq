@@ -51,19 +51,17 @@ class OperationsTests {
 
         application {
             rabbitmq {
-                runTest {
-                    queueBind {
+                queueBind {
+                    queue = "dlq"
+                    exchange = "dlx"
+                    routingKey = "dlq-dlx"
+                    queueDeclare {
                         queue = "dlq"
+                        durable = true
+                    }
+                    exchangeDeclare {
                         exchange = "dlx"
-                        routingKey = "dlq-dlx"
-                        queueDeclare {
-                            queue = "dlq"
-                            durable = true
-                        }
-                        exchangeDeclare {
-                            exchange = "dlx"
-                            type = "direct"
-                        }
+                        type = "direct"
                     }
                 }
             }
@@ -82,81 +80,79 @@ class OperationsTests {
 
         application {
             rabbitmq {
-                runTest {
-                    // declare dead letter queue
-                    queueBind {
+                // declare dead letter queue
+                queueBind {
+                    queue = "dlq"
+                    exchange = "dlx"
+                    routingKey = "dlq-dlx"
+                    queueDeclare {
                         queue = "dlq"
+                        durable = true
+                    }
+                    exchangeDeclare {
                         exchange = "dlx"
-                        routingKey = "dlq-dlx"
-                        queueDeclare {
-                            queue = "dlq"
-                            durable = true
-                        }
-                        exchangeDeclare {
-                            exchange = "dlx"
-                            type = "direct"
-                        }
+                        type = "direct"
                     }
-
-                    // declare queue configured with dead letter queue
-                    queueBind {
-                        queue = "test-queue"
-                        exchange = "test-exchange"
-                        queueDeclare {
-                            queue = "test-queue"
-                            arguments = mapOf(
-                                "x-dead-letter-exchange" to "dlx",
-                                "x-dead-letter-routing-key" to "dlq-dlx"
-                            )
-                        }
-                        exchangeDeclare {
-                            exchange = "test-exchange"
-                            type = "fanout"
-                        }
-                    }
-
-                    repeat(10) {
-                        basicPublish {
-                            exchange = "test-exchange"
-                            message {
-                                Message(content = "Hello world!")
-                            }
-                        }
-                    }
-
-                    assertEquals(messageCount { queue = "test-queue" }, 10)
-
-                    basicConsume {
-                        queue = "test-queue"
-                        autoAck = false
-                        deliverCallback<Message> { tag, message ->
-                            /* process message */
-                            // ...
-
-                            /* simulate something went wrong */
-                            basicReject {
-                                deliveryTag = tag
-                                requeue = false
-                            }
-                        }
-                    }
-
-                    Thread.sleep(2_000)
-
-                    assertEquals(messageCount { queue = "dlq" }, 10)
-
-                    basicConsume {
-                        queue = "dlq"
-                        autoAck = true
-                        deliverCallback<Message> { tag, message ->
-                            println("Received message: $message")
-                        }
-                    }
-
-                    Thread.sleep(2_000)
-
-                    assertEquals(messageCount { queue = "dlq" }, 0)
                 }
+
+                // declare queue configured with dead letter queue
+                queueBind {
+                    queue = "test-queue"
+                    exchange = "test-exchange"
+                    queueDeclare {
+                        queue = "test-queue"
+                        arguments = mapOf(
+                            "x-dead-letter-exchange" to "dlx",
+                            "x-dead-letter-routing-key" to "dlq-dlx"
+                        )
+                    }
+                    exchangeDeclare {
+                        exchange = "test-exchange"
+                        type = "fanout"
+                    }
+                }
+
+                repeat(10) {
+                    basicPublish {
+                        exchange = "test-exchange"
+                        message {
+                            Message(content = "Hello world!")
+                        }
+                    }
+                }
+
+                assertEquals(messageCount { queue = "test-queue" }, 10)
+
+                basicConsume {
+                    queue = "test-queue"
+                    autoAck = false
+                    deliverCallback<Message> { tag, message ->
+                        /* process message */
+                        // ...
+
+                        /* simulate something went wrong */
+                        basicReject {
+                            deliveryTag = tag
+                            requeue = false
+                        }
+                    }
+                }
+
+                Thread.sleep(2_000)
+
+                assertEquals(messageCount { queue = "dlq" }, 10)
+
+                basicConsume {
+                    queue = "dlq"
+                    autoAck = true
+                    deliverCallback<Message> { tag, message ->
+                        println("Received message: $message")
+                    }
+                }
+
+                Thread.sleep(2_000)
+
+                assertEquals(messageCount { queue = "dlq" }, 0)
             }
         }
     }
