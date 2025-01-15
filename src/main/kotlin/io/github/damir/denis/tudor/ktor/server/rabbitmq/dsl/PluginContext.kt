@@ -51,6 +51,23 @@ fun PluginContext.channel(
 }
 
 @RabbitDslMarker
+fun PluginContext.libChannel(
+    id: Int,
+    autoClose: Boolean = false,
+    block: suspend Channel.() -> Unit
+): Channel {
+    with(connectionManager) {
+        return getChannel(id)
+            .also {
+                coroutineScope.launch(dispatcher) {
+                    it.apply { block() }
+                    if (autoClose) closeChannel(id)
+                }
+            }
+    }
+}
+
+@RabbitDslMarker
 fun PluginContext.connection(
     id: String,
     autoClose: Boolean = false,
