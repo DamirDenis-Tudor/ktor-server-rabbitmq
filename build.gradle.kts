@@ -120,6 +120,16 @@ jreleaser {
     release {
         github{
             token = githubToken
+
+            changelog {
+                enabled = true
+                setFormatted("ALWAYS")
+                preset = "conventional-commits"
+                extraProperties = mapOf("categorizeScopes" to true)
+                contributors{
+                    enabled = false
+                }
+            }
         }
         project {
             name = "ktor-server-rabbitmq"
