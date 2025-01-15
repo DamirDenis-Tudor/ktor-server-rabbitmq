@@ -3,7 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 import com.rabbitmq.client.*
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import kotlinx.serialization.json.Json
@@ -63,7 +63,17 @@ class BasicConsumeBuilder(
 
     fun build(): String = delegatorScope(on = this@BasicConsumeBuilder) {
         return@delegatorScope when {
-            verify(::queue, ::autoAck, ::consumerTag, ::noLocal, ::exclusive, ::arguments, ::deliverCallback, ::cancelCallback, ::shutdownSignalCallback) -> {
+            verify(
+                ::queue,
+                ::autoAck,
+                ::consumerTag,
+                ::noLocal,
+                ::exclusive,
+                ::arguments,
+                ::deliverCallback,
+                ::cancelCallback,
+                ::shutdownSignalCallback
+            ) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -88,7 +98,7 @@ class BasicConsumeBuilder(
                 )
             }
 
-            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback ) -> {
+            verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::cancelCallback) -> {
                 channel.basicConsume(
                     queue,
                     autoAck,
@@ -97,7 +107,6 @@ class BasicConsumeBuilder(
                     cancelCallback
                 )
             }
-
 
 
             verify(::queue, ::autoAck, ::consumerTag, ::deliverCallback, ::shutdownSignalCallback) -> {
@@ -157,7 +166,10 @@ class BasicConsumeBuilder(
                 )
             }
 
-            else -> error(stateTrace())
+            else -> {
+                logStateTrace()
+                error("Unexpected combination of parameters")
+            }
         }
     }
 }

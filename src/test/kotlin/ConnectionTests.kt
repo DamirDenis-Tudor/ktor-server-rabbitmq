@@ -1,7 +1,7 @@
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.channel
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.connection
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitmq
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.rabbitmq
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.test.runTest

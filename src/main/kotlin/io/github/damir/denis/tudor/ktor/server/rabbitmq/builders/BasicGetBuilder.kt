@@ -4,7 +4,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.GetResponse
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.stateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 
@@ -19,7 +19,10 @@ class BasicGetBuilder(private val channel: Channel) {
                 channel.basicGet(queue, autoAck)
             }
 
-            else -> error(stateTrace())
+            else -> {
+                logStateTrace()
+                error("Unexpected combination of parameters")
+            }
         }
     }
 }

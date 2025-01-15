@@ -84,13 +84,16 @@ object StateRegistry {
      *
      * @return a list of strings representing the state and value of each property.
      */
-    fun stateTrace(): String {
+    fun logStateTrace() {
         val currentRef = ref.get() ?: throw IllegalStateException("No reference set for the current thread.")
-        return currentRef::class.memberProperties.joinToString("\n") {
+
+        logger.get().debug("<${ref.get()?.javaClass?.simpleName}> State trace.")
+
+        currentRef::class.memberProperties.map {
             val state = states.get()[currentRef.javaClass.name to it.name]
             val initialized = (state is State.Initialized)
             val value = if (initialized) state.value else "Uninitialized"
-            "<${ref.get()?.javaClass?.simpleName}> <${it.name}>, value: <$value>"
+            logger.get().debug("<{}> <{}>, value: <{}>", ref.get()?.javaClass?.simpleName, it.name, value)
         }
     }
 }
