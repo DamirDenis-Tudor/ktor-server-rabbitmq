@@ -9,8 +9,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.application
 import io.ktor.util.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 val ConnectionManagerKey = AttributeKey<ConnectionManager>("ConnectionManager")
 
@@ -21,29 +20,35 @@ val RabbitMQ = createApplicationPlugin(
 ) {
     pluginConfig.verify()
 
-    with(ConnectionManager(pluginConfig)) {
+    with(ConnectionManager(application, pluginConfig)) {
         ConnectionConfig.service = this
         application.attributes.put(ConnectionManagerKey, this)
     }
 }
 
 @RabbitDslMarker
-fun Application.rabbitmq(block: PluginContext.() -> Unit) {
+fun Application.rabbitmq(block:suspend PluginContext.() -> Unit) {
     with(attributes[ConnectionManagerKey]) {
-        PluginContext(this).apply(block)
+        coroutineScope.launch(dispatcher) {
+            PluginContext(this@with).apply { this.block() }
+        }
     }
 }
 
 @RabbitDslMarker
-fun Routing.rabbitmq(block: PluginContext.() -> Unit) {
+fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) {
     with(application.attributes[ConnectionManagerKey]) {
-        PluginContext(this).apply(block)
+        coroutineScope.launch(dispatcher) {
+            PluginContext(this@with).apply { this.block() }
+        }
     }
 }
 
 @RabbitDslMarker
-fun Route.rabbitmq(block: PluginContext.() -> Unit) {
+fun Route.rabbitmq(block: suspend PluginContext.() -> Unit) {
     with(application.attributes[ConnectionManagerKey]) {
-        PluginContext(this).apply(block)
+        coroutineScope.launch(dispatcher) {
+            PluginContext(this@with).apply { this.block() }
+        }
     }
 }
