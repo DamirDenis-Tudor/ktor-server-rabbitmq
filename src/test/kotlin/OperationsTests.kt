@@ -1,10 +1,9 @@
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitmq
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin.rabbitmq
 import kotlinx.serialization.Serializable
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -13,12 +12,13 @@ import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
 import kotlin.test.assertEquals
 
-@Serializable
-data class Message(
-    var content: String
-)
-
 class OperationsTests {
+
+    @Serializable
+    data class Message(
+        var content: String
+    )
+
     companion object {
         private val rabbitMQContainer: RabbitMQContainer = RabbitMQContainer(
             DockerImageName.parse("rabbitmq:management")
