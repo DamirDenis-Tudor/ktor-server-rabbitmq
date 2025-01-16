@@ -22,9 +22,9 @@ internal fun PluginContext.getChannelContext(channel: Channel): ChannelContext =
 @RabbitDslMarker
 fun PluginContext.channel(
     block: suspend ChannelContext.() -> Unit
-): Channel {
+) = runCatching {
     with(connectionManager) {
-        return getChannel()
+        getChannel()
             .also {
                 coroutineScope.launch(dispatcher) {
                     getChannelContext(it).apply { block() }
@@ -38,9 +38,9 @@ fun PluginContext.channel(
     id: Int,
     autoClose: Boolean = false,
     block: suspend ChannelContext.() -> Unit
-): Channel {
+) = runCatching {
     with(connectionManager) {
-        return getChannel(id)
+        getChannel(id)
             .also {
                 coroutineScope.launch(dispatcher) {
                     getChannelContext(it).apply { block() }
@@ -55,9 +55,9 @@ fun PluginContext.libChannel(
     id: Int,
     autoClose: Boolean = false,
     block: suspend Channel.() -> Unit
-): Channel {
+) = runCatching {
     with(connectionManager) {
-        return getChannel(id)
+        getChannel(id)
             .also {
                 coroutineScope.launch(dispatcher) {
                     it.apply { block() }
@@ -72,9 +72,9 @@ fun PluginContext.connection(
     id: String,
     autoClose: Boolean = false,
     block: suspend ConnectionContext.() -> Unit
-): Connection {
+) = runCatching {
     with(connectionManager) {
-        return getConnection(id)
+        getConnection(id)
             .also {
                 coroutineScope.launch(dispatcher) {
                     ConnectionContext(connectionManager, it).apply { block() }
@@ -89,9 +89,9 @@ fun PluginContext.libConnection(
     id: String,
     autoClose: Boolean = false,
     block: suspend Connection.() -> Unit
-): Connection {
+) = runCatching {
     with(connectionManager) {
-        return getConnection(id)
+        getConnection(id)
             .also {
                 coroutineScope.launch(dispatcher) {
                     it.apply { block() }

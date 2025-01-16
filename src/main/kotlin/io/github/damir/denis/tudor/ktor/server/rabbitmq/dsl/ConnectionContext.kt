@@ -4,6 +4,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
@@ -14,49 +15,59 @@ inline fun ConnectionContext.channel(
     id: Int,
     autoClose: Boolean = false,
     crossinline block: ChannelContext.() -> Unit
-): Channel {
+) = runCatching {
     with(connectionManager) {
-        val connectionId = getConnectionId(connection)
-        val channelId = id
-        return connectionManager.getChannel(channelId, connectionId)
-            .also {
-                ChannelContext(connectionManager, it).apply(block).apply {
-                    if (autoClose) {
-                        closeChannel(id)
+        coroutineScope.launch(dispatcher) {
+            connectionManager.getChannel(id, getConnectionId(connection))
+                .also {
+                    ChannelContext(connectionManager, it).apply(block).apply {
+                        if (autoClose) {
+                            closeChannel(id)
+                        }
                     }
                 }
-            }
+        }
     }
 }
 
 @RabbitDslMarker
 inline fun ConnectionContext.channel(
+    autoClose: Boolean = false,
     crossinline block: ChannelContext.() -> Unit
-): Channel {
+) = runCatching {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
-        val channelId = Random.nextInt(1000, 2000)
-        return connectionManager.getChannel(channelId, connectionId)
-            .also {
-                ChannelContext(connectionManager, it).apply(block).apply {
-                    closeChannel(channelId, connectionId)
+        val channelId = Random.nextInt(1000, 5000)
+        coroutineScope.launch(dispatcher) {
+            connectionManager.getChannel(channelId, connectionId)
+                .also {
+                    ChannelContext(connectionManager, it).apply(block).apply {
+                        if (autoClose) {
+                            closeChannel(channelId, connectionId)
+                        }
+                    }
                 }
-            }
+        }
     }
 }
 
 @RabbitDslMarker
 inline fun ConnectionContext.libChannel(
-    crossinline block: Channel.() -> Unit
-): Channel {
+    autoClose: Boolean = false,
+    crossinline block: suspend Channel.() -> Unit
+) = runCatching {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
-        val channelId = Random.nextInt(100000, 100000000)
-        return connectionManager.getChannel(channelId, connectionId)
-            .also {
-                it.apply(block).apply {
-                    closeChannel(channelId, connectionId)
+        val channelId = Random.nextInt(1000, 5000)
+        coroutineScope.launch(dispatcher) {
+            connectionManager.getChannel(channelId, connectionId)
+                .also {
+                    it.apply{ this.block() }.apply {
+                        if (autoClose) {
+                            closeChannel(channelId, connectionId)
+                        }
+                    }
                 }
-            }
+        }
     }
 }
