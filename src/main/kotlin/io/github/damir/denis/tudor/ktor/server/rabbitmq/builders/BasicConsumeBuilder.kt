@@ -58,7 +58,7 @@ class BasicConsumeBuilder(
     }
 
     @RabbitDslMarker
-    inline fun <reified T> deliveryCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
+    inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
         connectionManager.coroutineScope.launch(dispatcher) {
             receiverChannel.consumeAsFlow().collect { (deliveryTag, message) ->
                 callback(deliveryTag, Json.decodeFromString<T>(message))

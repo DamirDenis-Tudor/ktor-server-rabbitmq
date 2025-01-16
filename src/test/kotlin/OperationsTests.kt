@@ -121,16 +121,12 @@ class OperationsTests {
                     }
                 }
 
-                assertEquals(messageCount { queue = "test-queue" }, 10)
+                assertEquals(messageCount { queue = "test-queue" }.getOrNull(), 10)
 
                 basicConsume {
                     queue = "test-queue"
                     autoAck = false
                     deliverCallback<Message> { tag, message ->
-                        /* process message */
-                        // ...
-
-                        /* simulate something went wrong */
                         basicReject {
                             deliveryTag = tag
                             requeue = false
@@ -140,7 +136,7 @@ class OperationsTests {
 
                 Thread.sleep(2_000)
 
-                assertEquals(messageCount { queue = "dlq" }, 10)
+                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 10)
 
                 basicConsume {
                     queue = "dlq"
@@ -152,7 +148,7 @@ class OperationsTests {
 
                 Thread.sleep(2_000)
 
-                assertEquals(messageCount { queue = "dlq" }, 0)
+                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 0)
             }
         }
     }
