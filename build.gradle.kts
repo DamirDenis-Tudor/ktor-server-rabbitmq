@@ -125,12 +125,11 @@ publishing {
         maven {
             url = layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
         }
-         mavenLocal()
     }
 }
 
 signing {
-   //sign(publishing.publications["kotlin"])
+   sign(publishing.publications["kotlin"])
 }
 
 jreleaser {
