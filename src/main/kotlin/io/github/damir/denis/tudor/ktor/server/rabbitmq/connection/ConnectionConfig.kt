@@ -30,7 +30,7 @@ class ConnectionConfig(config: ApplicationConfig) {
     fun verify(){
         require(connectionAttempts > 0) { "connectionAttempts must be > 0" }
         require(attemptDelay > 0) { "attemptDelay must be > 0" }
-        require(dispatcherThreadPollSize > 1) { "dispatcherThreadPollSize must be > 1" }
+        require(dispatcherThreadPollSize > 0) { "dispatcherThreadPollSize must be > 0" }
         require(defaultConnectionName.isNotEmpty()) { "defaultConnectionName cannot be empty" }
         require(uri.isNotEmpty()) { "uri cannot be empty" }
         if (tlsEnabled){
