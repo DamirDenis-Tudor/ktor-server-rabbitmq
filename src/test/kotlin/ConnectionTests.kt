@@ -98,6 +98,7 @@ class ConnectionTests {
 
     @Test
     fun `test autoclose`() = testApplication {
+
         application {
             install(RabbitMQ) {
                 connectionAttempts = 3
@@ -105,7 +106,6 @@ class ConnectionTests {
                 uri = rabbitMQContainer.amqpUrl
             }
         }
-
         application {
             rabbitmq {
                 runTest {
@@ -116,6 +116,7 @@ class ConnectionTests {
                 }
             }
         }
+
     }
 }
 
