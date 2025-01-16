@@ -1,0 +1,21 @@
+name: Testing
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Release in Maven Central
+        run: |
+          ./gradlew test

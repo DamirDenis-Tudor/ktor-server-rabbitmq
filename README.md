@@ -1,6 +1,6 @@
 # ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ 
 
-![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg)
+![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) | ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
 
 ## Overview
 
