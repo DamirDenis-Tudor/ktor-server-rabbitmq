@@ -14,6 +14,12 @@ plugins {
     id("signing")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 group = "io.github.damirdenis-tudor"
 version = project.findProperty("releaseVersion") ?: "0.0.1"
 
@@ -27,7 +33,7 @@ repositories {
 
 dependencies {
     // ktor
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
 
     // coroutines
@@ -112,12 +118,12 @@ publishing {
         maven {
             url = layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
         }
-        // mavenLocal()
+         mavenLocal()
     }
 }
 
 signing {
-   sign(publishing.publications["kotlin"])
+   //sign(publishing.publications["kotlin"])
 }
 
 jreleaser {
