@@ -45,11 +45,6 @@ class ConnectionTests {
                 uri = rabbitMQContainer.amqpUrl
             }
         }
-        application {
-            runTest {
-                rabbitmq {}
-            }
-        }
     }
 
     @Test

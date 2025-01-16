@@ -40,12 +40,33 @@ class InstallTests {
     }
 
     @Test
-    fun `test install rabbitmq with attempts and delay lower than 0`() = testApplication {
+    fun `test install rabbitmq with attemptDelay lower than 0`() = testApplication {
         application{
             assertFailsWith<IllegalArgumentException> {
                 install(RabbitMQ) {
                     attemptDelay = -1
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test install rabbitmq with connectionAttempts and delay lower than 0`() = testApplication {
+        application{
+            assertFailsWith<IllegalArgumentException> {
+                install(RabbitMQ) {
                     connectionAttempts = -1
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test install rabbitmq with dispatcherThreadPollSize and delay lower than 0`() = testApplication {
+        application{
+            assertFailsWith<IllegalArgumentException> {
+                install(RabbitMQ) {
+                    dispatcherThreadPollSize = -1
                 }
             }
         }
@@ -67,9 +88,11 @@ class InstallTests {
         application{
             assertFailsWith<IllegalArgumentException> {
                 install(RabbitMQ) {
-                    uri = ""
+                    defaultConnectionName = ""
                 }
             }
         }
     }
+
+
 }

@@ -47,7 +47,7 @@ internal fun Application.module() {
         basicConsume {
             autoAck = true
             queue = "demo-queue"
-            deliveryCallback<String> { tag, message ->
+            deliverCallback<String> { tag, message ->
 
             }
         }

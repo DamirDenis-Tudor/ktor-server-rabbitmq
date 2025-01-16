@@ -63,8 +63,15 @@ dependencies {
 tasks {
     test {
         useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+            showCauses = true
+            showStackTraces = true
+        }
     }
 }
+
+
 
 tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
