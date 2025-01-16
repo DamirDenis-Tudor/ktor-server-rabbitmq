@@ -7,6 +7,7 @@
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>
+
     <logger name="io.github.damir.denis.tudor.ktor.server.rabbitmq" level="DEBUG"/>
     <logger name="com.rabbitmq.client" level="TRACE"/>
     <logger name="org.eclipse.jetty" level="INFO"/>

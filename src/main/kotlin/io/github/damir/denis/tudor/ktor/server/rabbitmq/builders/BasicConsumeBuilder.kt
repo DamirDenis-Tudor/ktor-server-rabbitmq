@@ -1,14 +1,28 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
 
-import com.rabbitmq.client.*
+
+import com.rabbitmq.client.CancelCallback
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.ConsumerShutdownSignalCallback
+import com.rabbitmq.client.DeliverCallback
+import com.rabbitmq.client.ShutdownSignalException
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.channels.getOrElse
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import java.util.concurrent.Executors
+
 
 @RabbitDslMarker
 class BasicConsumeBuilder(
@@ -23,33 +37,31 @@ class BasicConsumeBuilder(
     var queue: String by Delegator()
     var consumerTag: String by Delegator()
 
-    var deliverCallback: DeliverCallback by Delegator()
+    private var deliverCallback: DeliverCallback by Delegator()
     private var cancelCallback: CancelCallback by Delegator()
     private var shutdownSignalCallback: ConsumerShutdownSignalCallback by Delegator()
 
+    var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<Long, String>>(10_000)
+    var dispatcher: CoroutineDispatcher = connectionManager.dispatcher
 
     init {
         noLocal = false
         exclusive = false
         arguments = emptyMap()
-
-        cancelCallback { tag ->
-            println("Consumer with tag: $tag cancelled")
+        deliverCallback = DeliverCallback { _, delivery ->
+            receiverChannel.trySend(
+                delivery.envelope.deliveryTag to delivery.body.toString(Charsets.UTF_8)
+            )
         }
+        cancelCallback = CancelCallback { }
+        shutdownSignalCallback = ConsumerShutdownSignalCallback {_, error ->}
     }
 
     @RabbitDslMarker
-    inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
-        deliverCallback = DeliverCallback { _, delivery ->
-            with(connectionManager) {
-                coroutineScope.launch(dispatcher) {
-                    callback(
-                        delivery.envelope.deliveryTag,
-                        Json.decodeFromString<T>(
-                            delivery.body.toString(Charsets.UTF_8)
-                        )
-                    )
-                }
+    inline fun <reified T> deliveryCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
+        connectionManager.coroutineScope.launch(dispatcher) {
+            receiverChannel.consumeAsFlow().collect { (deliveryTag, message) ->
+                callback(deliveryTag, Json.decodeFromString<T>(message))
             }
         }
     }
