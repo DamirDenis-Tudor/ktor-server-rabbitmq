@@ -1,9 +1,14 @@
-# ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)abbitMQ 
+<div align="center">
 
-![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) | ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
+# ![KabbitMQ](https://github.com/user-attachments/assets/bc22917b-d6bd-4f34-8775-707e575677a0)[abbitMQ](https://central.sonatype.com/artifact/io.github.damirdenis-tudor/ktor-server-rabbitmq) ![ktor](https://avatars.githubusercontent.com/u/28214161?s=48&v=4) [Official Ktor plugin](https://start.ktor.io/settings)
 
-### Overview 
-- This plugin provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
+</div>
+
+![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
+
+
+### Overview
+- `Plugin` that provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
 
 ### Features
 
@@ -13,13 +18,7 @@
 - Provides a built-in mechanism for validating property combinations.
 - Gives the possibility to interact directly with the java library.
 
-### Gradle (Kotlin DSL) - dependencies
-
-```kotlin
-dependencies {
-    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.3.0")
-}
-```
+---
 
 ### Table of Contents
 1. [Installation](#installation)
@@ -29,8 +28,6 @@ dependencies {
 5. [Library Calls Example](#library-calls-example)
 6. [Dead Letter Queue Example](#dead-letter-queue-example)
 7. [Logging](#logging)
-
-
 
 ### Installation
 ```kotlin

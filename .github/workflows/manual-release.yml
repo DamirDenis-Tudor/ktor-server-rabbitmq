@@ -38,3 +38,4 @@ jobs:
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
             -PmakeDeployment="false" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
+
