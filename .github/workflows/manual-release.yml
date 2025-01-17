@@ -36,5 +36,5 @@ jobs:
         run: |
           ./gradlew jreleaserRelease \
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
-            -PmakeDeployment="true" \
+            -PmakeDeployment="false" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
