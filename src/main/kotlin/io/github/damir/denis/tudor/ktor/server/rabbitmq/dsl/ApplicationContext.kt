@@ -1,10 +1,10 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.ConnectionManagerKey
-import io.ktor.server.application.Application
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.Routing
-import io.ktor.server.routing.application
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -22,11 +22,10 @@ import kotlinx.coroutines.launch
 @RabbitDslMarker
 fun Application.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(attributes[ConnectionManagerKey]) {
-        coroutineScope.launch(dispatcher) {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
             PluginContext(this@with).apply { this.block() }
         }
     }
-
 
 /**
  * Configures RabbitMQ within the `Routing` scope.
@@ -43,7 +42,7 @@ fun Application.rabbitmq(block: suspend PluginContext.() -> Unit) =
 @RabbitDslMarker
 fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(application.attributes[ConnectionManagerKey]) {
-        coroutineScope.launch(dispatcher) {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
             PluginContext(this@with).apply { this.block() }
         }
     }
@@ -63,7 +62,7 @@ fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) =
 @RabbitDslMarker
 fun Route.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(application.attributes[ConnectionManagerKey]) {
-        coroutineScope.launch(dispatcher) {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
             PluginContext(this@with).apply { this.block() }
         }
     }

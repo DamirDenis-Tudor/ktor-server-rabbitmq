@@ -73,6 +73,17 @@ class InstallTests {
     }
 
     @Test
+    fun `test install rabbitmq with consumerChannelCoroutineSize and delay lower than 0`() = testApplication {
+        application{
+            assertFailsWith<IllegalArgumentException> {
+                install(RabbitMQ) {
+                    consumerChannelCoroutineSize = -1
+                }
+            }
+        }
+    }
+
+    @Test
     fun `test install rabbitmq with uri empty`() = testApplication {
         application{
             assertFailsWith<IllegalArgumentException> {
