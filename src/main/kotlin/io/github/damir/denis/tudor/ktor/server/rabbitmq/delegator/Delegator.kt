@@ -15,7 +15,7 @@ import kotlin.reflect.full.memberProperties
  * @constructor Creates a `StateDelegator` with the initial state set to `Uninitialized`.
  *
  * @author Damir Denis-Tudor
- * @version 0.1.0
+ * @version 1.0.0
  */
 internal class Delegator<T : Any> {
 

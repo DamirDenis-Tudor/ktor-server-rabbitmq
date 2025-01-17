@@ -1,30 +1,11 @@
-package io.github.damir.denis.tudor.ktor.server.rabbitmq.plugin
+package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionConfig
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.PluginContext
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
-import io.ktor.server.application.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.ConnectionManagerKey
+import io.ktor.server.application.Application
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.application
-import io.ktor.util.*
 import kotlinx.coroutines.launch
-
-val ConnectionManagerKey = AttributeKey<ConnectionManager>("ConnectionManager")
-
-val RabbitMQ = createApplicationPlugin(
-    name = "KabbitMQ",
-    configurationPath = "ktor.rabbitmq",
-    createConfiguration = ::ConnectionConfig
-) {
-    pluginConfig.verify()
-
-    with(ConnectionManager(application, pluginConfig)) {
-        ConnectionConfig.service = this
-        application.attributes.put(ConnectionManagerKey, this)
-    }
-}
 
 /**
  * Configures RabbitMQ within the `Application` scope.
@@ -39,13 +20,13 @@ val RabbitMQ = createApplicationPlugin(
  * @since 1.2.3
  */
 @RabbitDslMarker
-fun Application.rabbitmq(block: suspend PluginContext.() -> Unit) {
+fun Application.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(attributes[ConnectionManagerKey]) {
         coroutineScope.launch(dispatcher) {
             PluginContext(this@with).apply { this.block() }
         }
     }
-}
+
 
 /**
  * Configures RabbitMQ within the `Routing` scope.
@@ -60,13 +41,12 @@ fun Application.rabbitmq(block: suspend PluginContext.() -> Unit) {
  * @since 1.2.3
  */
 @RabbitDslMarker
-fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) {
+fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(application.attributes[ConnectionManagerKey]) {
         coroutineScope.launch(dispatcher) {
             PluginContext(this@with).apply { this.block() }
         }
     }
-}
 
 /**
  * Configures RabbitMQ within the `Route` scope.
@@ -81,10 +61,9 @@ fun Routing.rabbitmq(block: suspend PluginContext.() -> Unit) {
  * @since 1.2.3
  */
 @RabbitDslMarker
-fun Route.rabbitmq(block: suspend PluginContext.() -> Unit) {
+fun Route.rabbitmq(block: suspend PluginContext.() -> Unit) =
     with(application.attributes[ConnectionManagerKey]) {
         coroutineScope.launch(dispatcher) {
             PluginContext(this@with).apply { this.block() }
         }
     }
-}
