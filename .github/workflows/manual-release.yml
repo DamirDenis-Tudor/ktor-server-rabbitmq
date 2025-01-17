@@ -1,0 +1,40 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Select version type:'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get next version
+        uses: reecetech/version-increment@2024.10.1
+        id: version
+        with:
+          scheme: semver
+          increment: ${{ github.event.inputs.version_type }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Release
+        run: |
+          ./gradlew jreleaserRelease \
+            -PreleaseVersion="${{ steps.version.outputs.version }}" \
+            -PmakeDeployment="true" \
+            -PgithubToken="${{ secrets.GITHUB_TOKEN }}"

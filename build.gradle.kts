@@ -25,6 +25,7 @@ version = project.findProperty("releaseVersion") ?: "0.0.1"
 
 val mavenCentralUsername = project.findProperty("mavenCentralUsername")?.toString() ?: ""
 val mavenCentralPasswordToken = project.findProperty("mavenCentralPasswordToken")?.toString() ?: ""
+val makeDeployment = project.findProperty("makeDeployment")?.toString()?.toBoolean() != false
 val githubToken = project.findProperty("githubToken")?.toString() ?: "no_blank"
 
 repositories {
@@ -162,30 +163,32 @@ jreleaser {
             description.set("Ktor Server RabbitMQ plugin")
             copyright.set("Damir Denis-Tudor")
         }
-        deploy {
-            maven {
-                mavenCentral {
-                    create("sonatype"){
-                        active = Active.RELEASE
-                        url = "https://central.sonatype.com/api/v1/publisher"
+        if (makeDeployment){
+            deploy {
+                maven {
+                    mavenCentral {
+                        create("sonatype"){
+                            active = Active.RELEASE
+                            url = "https://central.sonatype.com/api/v1/publisher"
 
-                        snapshotSupported = true
+                            snapshotSupported = true
 
-                        setAuthorization("BEARER")
-                        username = mavenCentralUsername
-                        password = mavenCentralPasswordToken
+                            setAuthorization("BEARER")
+                            username = mavenCentralUsername
+                            password = mavenCentralPasswordToken
 
-                        stagingRepository("build/staging-deploy")
+                            stagingRepository("build/staging-deploy")
 
-                        connectTimeout = 20
-                        readTimeout = 60
-                        sign = false
+                            connectTimeout = 20
+                            readTimeout = 60
+                            sign = false
 
-                        verifyUrl = "https://repo1.maven.org/maven2/{{path}}/{{filename}}"
-                        namespace = "io.github.damirdenis-tudor"
+                            verifyUrl = "https://repo1.maven.org/maven2/{{path}}/{{filename}}"
+                            namespace = "io.github.damirdenis-tudor"
 
-                        retryDelay = 60
-                        maxRetries = 100
+                            retryDelay = 60
+                            maxRetries = 100
+                        }
                     }
                 }
             }
