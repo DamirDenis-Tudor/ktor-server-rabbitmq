@@ -2,28 +2,43 @@
 
 ![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) | ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
 
-## Overview
+### Overview 
+- This plugin provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
 
-- `kabbitmq` is a Ktor plugin for RabbitMQ that provides access to all the core functionalities of the `com.rabbitmq:amqp-client` library. It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.
+### Features
 
+- Integrated with coroutines and has a separate dispatcher.
+- Seamlessly integrates with the Kotlin DSL, making it readable, maintainable, and easy to use.
+- Includes a built-in connection/channel management system.
+- Provides a built-in mechanism for validating property combinations.
+- Gives the possibility to interact directly with the java library.
 
 ### Gradle (Kotlin DSL) - dependencies
 
 ```kotlin
 dependencies {
-    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.1.0")
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.2.4")
 }
 ```
 
-### Installation
+### Table of Contents
+1. [Installation](#installation)
+2. [Queue Binding Example](#queue-binding-example)
+3. [Producer Example](#producer-example)
+4. [Consumer Example](#consumer-example)
+5. [Library Calls Example](#library-calls-example)
+6. [Dead Letter Queue Example](#dead-letter-queue-example)
 
+
+
+### Installation(#installation)
 ```kotlin
-
 install(KabbitMQ) {
     uri = "amqp://<user>:<password>@<address>:<port>"
     defaultConnectionName = "<default_connection>"
     connectionAttempts = 20
     attemptDelay = 10
+    dispatcherThreadPollSize = 2
 
     tlsEnabled = true
     tlsKeystorePath = "<path>"
@@ -33,168 +48,77 @@ install(KabbitMQ) {
 }
 ```
 
-### Features
-- DSL wrapper for most functionalities with built-in parameter validation.
-- Robust channel and connection management mechanisms.
-- Integrated message serialization and deserialization.
-- Option to interact directly with `com.rabbitmq:amqp-client`.
-
-### Samples
-
-#### Connection and channel management sample
+### Queue Binding Example(#queue-binding-example)
 ```kotlin
-/* default connection, default channel */
-messageCount { queue = "test-queue" }
-
-channel(id = 2, autoClose = false ){
-    /* calls */
-}
-
-/* new connection */
-connection(id = "connection_0", autoClose = false){
-    /* new channel */
-    channel(id = 2, autoClose = false ){
-        /* calls */
-    }
-    
-    /* will be destroyed after the task is finished */
-    channel{
-        /* calls */
-    }
-}
-
-/* reused connection */
-connection(id = "connection_0"){
-    /* reused channel */
-    channel(id = 2, autoClose = false ){
-        /* calls */
-    }
-    /* new channel */
-    channel(id = 3, autoClose = false ){
-        /* calls */
-    }
-}
-
-/* default connection, new channel */
-channel(id = 4, autoClose = false ){
-    /* calls */
-}
-```
-
-```log
-DEBUG io.kabbitmq.KabbitMQService - Debug mode is enabled.
-DEBUG io.kabbitmq.KabbitMQService - Created new connection with id: <default_connection>.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <1> for connection with id <default_connection>.
-DEBUG i.k.KabbitMQMessageCountBuilder - Build method for method called.
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <default_connection> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <2> for connection with id <default_connection>.
-DEBUG io.kabbitmq.KabbitMQService - Created new connection with id: <connection_0>.
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <connection_0> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <2> for connection with id <connection_0>.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <84316673> for connection with id <connection_0>.
-DEBUG io.kabbitmq.KabbitMQService - Channel with id: <84316673>, closed
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <connection_0> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Channel with id: <connection_0-channel-2> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <connection_0> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <3> for connection with id <connection_0>.
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <connection_0>, closed
-DEBUG io.kabbitmq.KabbitMQService - Connection with id: <default_connection> taken from cache.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <4> for connection with id <default_connection>.```
-```
-
-#### Strongly type code style sample
-
-```kotlin
-/*
- * `com.rabbitmq:amqp-client` offers overloaded functions, therefore to ensure 
- * compatibility with the DSL style, a robust parameter validation mechanism is necessary. 
- * At the heart of this mechanism is a custom state delegator.
- */
-
-basicConsume {
-    queue = "test-queue"
-    /* autoAck = true */ // let's say that autoAck is omited
-    deliverCallback<Message> { tag, message ->
-        println("Message: $message with $tag")
-    }
-}
-```
-
-```log
-DEBUG io.kabbitmq.KabbitMQService - Debug mode is enabled.
-DEBUG io.kabbitmq.KabbitMQService - Created new connection with id: <default_connection>.
-DEBUG io.kabbitmq.KabbitMQService - Created new channel with id <1> for connection with id <default_connection>.
-DEBUG i.k.KabbitMQBasicConsumeBuilder - Build method for method called.
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <arguments>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <autoAck>, initialized: <false>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <cancelCallback>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <channel>, initialized: <false>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <consumerTag>, initialized: <false>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <deliverCallback>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <exclusive>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <noLocal>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <queue>, initialized: <true>
-DEBUG i.k.KabbitMQBasicConsumeBuilder - <shutdownSignalCallback>, initialized: <false>
-
-java.lang.IllegalStateException: Unsupported combination of parameters for KabbitMQBasicConsumeBuilder.
-
-	at io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.KabbitMQBasicConsumeBuilder.build$lambda$3(KabbitMQBasicConsumeBuilder.kt:159)
-	at io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator$Companion.withThisRef(Delegator.kt:86)
-	at io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.KabbitMQBasicConsumeBuilder.build(KabbitMQBasicConsumeBuilder.kt:65)
-```
-
-#### Serialization and deserialization sample
-
-#### Direct interaction with libray sample
-```kotlin
-@Serializable
-data class Message(
-    var content: String
-)
-
-basicPublish {
-    exchange = "test-exchange"
-    message {
-        Message(content = "Hello world!")
-    }
-}
-
-basicConsume {
-    queue = "test-queue"
-    autoAck = false
-    deliverCallback<Message> { tag, message ->
-    /* process message */
-    // ...
-    
-    /* simulate something went wrong */
-        basicReject {
-            deliveryTag = tag
-            requeue = false
+rabbitmq {
+    queueBind {
+        queue = "demo-queue"
+        exchange = "demo-exchange"
+        routingKey = "demo-routing-key"
+        queueDeclare {
+            queue = "demo-queue"
+            durable = true
+        }
+        exchangeDeclare {
+            exchange = "demo-exchange"
+            type = "direct"
         }
     }
 }
 ```
 
+### Producer Example(#producer-example)
 ```kotlin
-channel("direct-calls"){
-    basicPublish("test", "test-routing-key", null, "fdsf".toByteArray())
-    
-    val consumer = object : DefaultConsumer(channel) {
-        override fun handleDelivery(
-            consumerTag: String?,
-            envelope: Envelope?,
-            properties: AMQP.BasicProperties?,
-            body: ByteArray?
-        ) {
-            println("Received message: ${body?.let { String(it) }}")
+rabbitmq {
+    repeat(10) {
+        basicPublish {
+            exchange = "demo-exchange"
+            routingKey = "demo-routing-key"
+            message { "Hello World!" }
         }
     }
-    basicConsume(queueName, true, consumer)
+}
+```
+
+### Consumer Example(#consumer-example)
+```kotlin
+rabbitmq {
+    basicConsume {
+        autoAck = true
+        queue = "demo-queue"
+        deliverCallback<String> { tag, message ->
+            logger.info("Received message: $message")
+        }
+    }
+}
+```
+
+### Library Calls Example(#library-calls-example)
+```kotlin
+rabbitmq {
+    libConnection("lib_connection") {
+        with(createChannel()) {
+            basicPublish("demo-queue", "demo-routing-key", null, "Hello!".toByteArray())
+
+            val consumer = object : DefaultConsumer(channel) {
+                override fun handleDelivery(
+                    consumerTag: String?,
+                    envelope: Envelope?,
+                    properties: AMQP.BasicProperties?,
+                    body: ByteArray?
+                ) {
+
+                }
+            }
+
+            basicConsume("demo-queue", true, consumer)
+        }
+    }
 }
 ```
 
 
-## Dead Letter Queue Example
+### Dead Letter Queue Example(#dead-letter-queue-example)
 
 ```kotlin 
 @Serializable
@@ -202,73 +126,73 @@ data class Message(
     var content: String
 )
 
-fun Application.queueBinding() {
-    install(KabbitMQ) {
-        uri = "amqp://guest:guest@localhost:5678"
+fun Application.module() {
+    install(RabbitMQ) {
+        uri = "amqp://guest:guest@localhost:5672"
+        dispatcherThreadPollSize = 3
     }
 
-    // declare dead letter queue
-    queueBind {
-        queue = "dlq"
-        exchange = "dlx"
-        routingKey = "dlq-dlx"
-        queueDeclare {
+    rabbitmq {
+        queueBind {
             queue = "dlq"
-            durable = true
-        }
-        exchangeDeclare {
             exchange = "dlx"
-            type = BuiltinExchangeType.DIRECT
+            routingKey = "dlq-dlx"
+            queueDeclare {
+                queue = "dlq"
+                durable = true
+            }
+            exchangeDeclare {
+                exchange = "dlx"
+                type = "direct"
+            }
         }
-    }
 
-    // declare queue configured with dead letter queue
-    queueBind {
-        queue = "test-queue"
-        exchange = "test-exchange"
-        queueDeclare {
+        queueBind {
             queue = "test-queue"
-            arguments = mapOf(
-                "x-dead-letter-exchange" to "dlx",
-                "x-dead-letter-routing-key" to "dlq-dlx"
-            )
-        }
-        exchangeDeclare {
             exchange = "test-exchange"
-            type = BuiltinExchangeType.FANOUT
-        }
-    }
-
-    repeat(10) {
-        basicPublish {
-            exchange = "test-exchange"
-            message {
-                Message(content = "Hello world!")
+            queueDeclare {
+                queue = "test-queue"
+                arguments = mapOf(
+                    "x-dead-letter-exchange" to "dlx",
+                    "x-dead-letter-routing-key" to "dlq-dlx"
+                )
+            }
+            exchangeDeclare {
+                exchange = "test-exchange"
+                type = "fanout"
             }
         }
     }
 
-    basicConsume {
-        queue = "test-queue"
-        autoAck = false
-        deliverCallback<Message> { tag, message ->
-            /* process message */
-            // ...
-            
-            /* simulate something went wrong */
-            basicReject {
-                deliveryTag = tag
-                requeue = false
+    rabbitmq {
+        repeat(100) {
+            basicPublish {
+                exchange = "test-exchange"
+                message {
+                    Message(content = "Hello world!")
+                }
             }
         }
     }
 
-    basicConsume {
-        queue = "dlq"
-        autoAck = true
-        deliverCallback<Message> { _, message ->
-            /* process message */
-            println("Message in DLQ: $message")
+    rabbitmq{
+        basicConsume {
+            queue = "test-queue"
+            autoAck = false
+            deliverCallback<Message> { tag, message ->
+                basicReject {
+                    deliveryTag = tag
+                    requeue = false
+                }
+            }
+        }
+
+        basicConsume {
+            queue = "dlq"
+            autoAck = true
+            deliverCallback<Message> { tag, message ->
+                println("Received message in dead letter queue: $message")
+            }
         }
     }
 }
