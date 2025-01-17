@@ -7,7 +7,6 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @RabbitDslMarker
