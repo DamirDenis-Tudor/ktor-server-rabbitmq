@@ -54,7 +54,7 @@ class BasicConsumeBuilder(
             )
         }
         cancelCallback = CancelCallback { }
-        shutdownSignalCallback = ConsumerShutdownSignalCallback {_, error ->}
+        shutdownSignalCallback = ConsumerShutdownSignalCallback { _, error -> }
     }
 
     @RabbitDslMarker
