@@ -7,7 +7,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator
  * @param T the type of the value contained in the `Initialized` state.
  *
  * @author Damir Denis-Tudor
- * @version 0.1.0
+ * @version 1.0.0
  */
 sealed class State<out T> {
     /**

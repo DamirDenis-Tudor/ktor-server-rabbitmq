@@ -24,6 +24,9 @@ import javax.net.ssl.TrustManagerFactory
  * connection handling.
  *
  * @param config the configuration object containing RabbitMQ connection settings.
+ *
+ * @author Damir Denis-Tudor
+ * @version 1.0.0
  */
 open class ConnectionManager(
     private val scope: CoroutineScope,
@@ -37,7 +40,6 @@ open class ConnectionManager(
     private val logger = KtorSimpleLogger(this.javaClass.name)
 
     private val threadIdCounter = AtomicInteger(-1)
-
     private val executor = Executors.newFixedThreadPool(config.dispatcherThreadPollSize) { runnable ->
         val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
 
@@ -51,6 +53,9 @@ open class ConnectionManager(
 
     val coroutineScope
         get () = scope
+
+    val configuration
+        get () = config
 
     init {
         connectionFactory.apply {
