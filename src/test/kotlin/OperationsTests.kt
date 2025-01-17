@@ -1,8 +1,11 @@
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.serialization.Serializable
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
+import kotlin.coroutines.coroutineContext
 import kotlin.test.assertEquals
 
 class OperationsTests {
@@ -51,26 +55,20 @@ class OperationsTests {
         }
 
         application {
-            runBlocking {
-                rabbitmq {
-                    queueBind {
+            rabbitmqTest {
+                queueBind {
+                    queue = "dlq"
+                    exchange = "dlx"
+                    routingKey = "dlq-dlx"
+                    queueDeclare {
                         queue = "dlq"
-                        exchange = "dlx"
-                        routingKey = "dlq-dlx"
-                        queueDeclare {
-                            queue = "dlq"
-                            durable = true
-                        }
-                        exchangeDeclare {
-                            exchange = "dlx"
-                            type = "direct"
-                        }
-                    }.onFailure {
-                        throw it
-                    }.onSuccess {
-                        println(it)
+                        durable = true
                     }
-                }.join()
+                    exchangeDeclare {
+                        exchange = "dlx"
+                        type = "direct"
+                    }
+                }.getOrThrow()
             }
         }
     }
@@ -86,76 +84,74 @@ class OperationsTests {
         }
 
         application {
-            runTest {
-                rabbitmq {
-                    queueBind {
+            rabbitmqTest {
+                queueBind {
+                    queue = "dlq"
+                    exchange = "dlx"
+                    routingKey = "dlq-dlx"
+                    queueDeclare {
                         queue = "dlq"
+                        durable = true
+                    }
+                    exchangeDeclare {
                         exchange = "dlx"
-                        routingKey = "dlq-dlx"
-                        queueDeclare {
-                            queue = "dlq"
-                            durable = true
-                        }
-                        exchangeDeclare {
-                            exchange = "dlx"
-                            type = "direct"
-                        }
+                        type = "direct"
                     }
+                }
 
-                    queueBind {
+                queueBind {
+                    queue = "test-queue"
+                    exchange = "test-exchange"
+                    queueDeclare {
                         queue = "test-queue"
+                        arguments = mapOf(
+                            "x-dead-letter-exchange" to "dlx",
+                            "x-dead-letter-routing-key" to "dlq-dlx"
+                        )
+                    }
+                    exchangeDeclare {
                         exchange = "test-exchange"
-                        queueDeclare {
-                            queue = "test-queue"
-                            arguments = mapOf(
-                                "x-dead-letter-exchange" to "dlx",
-                                "x-dead-letter-routing-key" to "dlq-dlx"
-                            )
-                        }
-                        exchangeDeclare {
-                            exchange = "test-exchange"
-                            type = "fanout"
+                        type = "fanout"
+                    }
+                }
+
+                repeat(10) {
+                    basicPublish {
+                        exchange = "test-exchange"
+                        message {
+                            Message(content = "Hello world!")
                         }
                     }
+                }
 
-                    repeat(10) {
-                        basicPublish {
-                            exchange = "test-exchange"
-                            message {
-                                Message(content = "Hello world!")
-                            }
+                assertEquals(messageCount { queue = "test-queue" }.getOrNull(), 10)
+
+                basicConsume {
+                    queue = "test-queue"
+                    autoAck = false
+                    deliverCallback<Message> { tag, message ->
+                        basicReject {
+                            deliveryTag = tag
+                            requeue = false
                         }
                     }
+                }.getOrThrow()
 
-                    assertEquals(messageCount { queue = "test-queue" }.getOrNull(), 10)
+                Thread.sleep(2_000)
 
-                    basicConsume {
-                        queue = "test-queue"
-                        //autoAck = false
-                        deliverCallback<Message> { tag, message ->
-                            basicReject {
-                                deliveryTag = tag
-                                requeue = false
-                            }
-                        }
-                    }.getOrThrow()
+                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 10)
 
-                    Thread.sleep(2_000)
-
-                    assertEquals(messageCount { queue = "dlq" }.getOrNull(), 10)
-
-                    basicConsume {
-                        queue = "dlq"
-                        autoAck = true
-                        deliverCallback<Message> { tag, message ->
-                            println("Received message: $message")
-                        }
+                basicConsume {
+                    queue = "dlq"
+                    autoAck = true
+                    deliverCallback<Message> { tag, message ->
+                        println("Received message: $message")
                     }
+                }
 
-                    Thread.sleep(2_000)
+                Thread.sleep(2_000)
 
-                    assertEquals(messageCount { queue = "dlq" }.getOrNull(), 0)
-                }.join()
+                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 0)
             }
         }
     }

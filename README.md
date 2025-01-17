@@ -17,7 +17,7 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.2.4")
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:1.3.0")
 }
 ```
 
@@ -28,10 +28,11 @@ dependencies {
 4. [Consumer Example](#consumer-example)
 5. [Library Calls Example](#library-calls-example)
 6. [Dead Letter Queue Example](#dead-letter-queue-example)
+7. [Logging](#logging)
 
 
 
-### Installation(#installation)
+### Installation
 ```kotlin
 install(KabbitMQ) {
     uri = "amqp://<user>:<password>@<address>:<port>"
@@ -48,7 +49,7 @@ install(KabbitMQ) {
 }
 ```
 
-### Queue Binding Example(#queue-binding-example)
+### Queue Binding Example
 ```kotlin
 rabbitmq {
     queueBind {
@@ -67,7 +68,7 @@ rabbitmq {
 }
 ```
 
-### Producer Example(#producer-example)
+### Producer Example
 ```kotlin
 rabbitmq {
     repeat(10) {
@@ -80,7 +81,7 @@ rabbitmq {
 }
 ```
 
-### Consumer Example(#consumer-example)
+### Consumer Example
 ```kotlin
 rabbitmq {
     basicConsume {
@@ -93,7 +94,7 @@ rabbitmq {
 }
 ```
 
-### Library Calls Example(#library-calls-example)
+### Library Calls Example
 ```kotlin
 rabbitmq {
     libConnection("lib_connection") {
@@ -118,7 +119,7 @@ rabbitmq {
 ```
 
 
-### Dead Letter Queue Example(#dead-letter-queue-example)
+### Dead Letter Queue Example
 
 ```kotlin 
 @Serializable
@@ -196,4 +197,11 @@ fun Application.module() {
         }
     }
 }
+```
+
+### Logging
+
+- In order to set a logging level to this library add this line in `logback.xml` file:
+```xml
+<logger name="io.github.damir.denis.tudor.ktor.server.rabbitmq" level="<level>"/>
 ```

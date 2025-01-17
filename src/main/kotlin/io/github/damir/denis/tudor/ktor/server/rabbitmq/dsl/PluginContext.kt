@@ -3,6 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -81,7 +82,7 @@ fun PluginContext.channel(
 ) = runCatching {
     with(connectionManager) {
         getChannel().also {
-            coroutineScope.launch(dispatcher) {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
                 getChannelContext(it).apply { block() }
             }
         }
@@ -110,17 +111,15 @@ suspend fun PluginContext.channel(
     block: suspend ChannelContext.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(dispatcher) {
-            getChannel(id).also {
-                coroutineScope.launch(dispatcher) {
-                    getChannelContext(it).apply {
-                        block()
-                    }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeChannel(id)
-                    }
+        getChannel(id).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                getChannelContext(it).apply {
+                    block()
+                }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeChannel(id)
                 }
             }
         }
@@ -149,15 +148,13 @@ suspend fun PluginContext.libChannel(
     block: suspend Channel.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(dispatcher) {
-            getChannel(id).also {
-                coroutineScope.launch(dispatcher) {
-                    it.apply { block() }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeChannel(id)
-                    }
+        getChannel(id).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                it.apply { block() }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeChannel(id)
                 }
             }
         }
@@ -186,15 +183,13 @@ suspend fun PluginContext.connection(
     block: suspend ConnectionContext.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(dispatcher) {
-            getConnection(id).also {
-                coroutineScope.launch(dispatcher) {
-                    ConnectionContext(connectionManager, it).apply { block() }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeConnection(id)
-                    }
+        getConnection(id).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                ConnectionContext(connectionManager, it).apply { block() }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeConnection(id)
                 }
             }
         }
@@ -223,15 +218,13 @@ suspend fun PluginContext.libConnection(
     block: suspend Connection.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(dispatcher) {
-            getConnection(id).also {
-                coroutineScope.launch(dispatcher) {
-                    it.apply { block() }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeConnection(id)
-                    }
+        getConnection(id).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                it.apply { block() }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeConnection(id)
                 }
             }
         }
