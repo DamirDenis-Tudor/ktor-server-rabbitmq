@@ -33,7 +33,7 @@ open class ChannelContext(
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) = runCatching {
-    withContext(Dispatchers.rabbitMQ) { BasicAckBuilder(channel).apply { this.block() }.build() }
+     BasicAckBuilder(channel).apply { this.block() }.build()
 }
 
 /**
