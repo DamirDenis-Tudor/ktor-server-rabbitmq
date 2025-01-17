@@ -95,7 +95,7 @@ object StateRegistry {
             val state = states.get()[currentRef.javaClass.name to it.name]
             val initialized = (state is State.Initialized)
             val value = if (initialized) state.value else "Uninitialized"
-            logger.get().debug("<{}> <{}>, value: <{}>", ref.get()?.javaClass?.simpleName, it.name, value)
+            logger.get().error("<{}> <{}>, value: <{}>", ref.get()?.javaClass?.simpleName, it.name, value)
         }
     }
 }
