@@ -131,14 +131,14 @@ class OperationsTests {
 
                     basicConsume {
                         queue = "test-queue"
-                        autoAck = false
+                        //autoAck = false
                         deliverCallback<Message> { tag, message ->
                             basicReject {
                                 deliveryTag = tag
                                 requeue = false
                             }
                         }
-                    }
+                    }.getOrThrow()
 
                     Thread.sleep(2_000)
 
