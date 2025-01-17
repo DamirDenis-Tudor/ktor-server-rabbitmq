@@ -1,10 +1,6 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator
 
-import com.sun.jmx.mbeanserver.DefaultMXBeanMappingFactory.propertyName
-import io.ktor.util.logging.*
-import io.ktor.util.logging.KtorSimpleLogger
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
 
 
 /**

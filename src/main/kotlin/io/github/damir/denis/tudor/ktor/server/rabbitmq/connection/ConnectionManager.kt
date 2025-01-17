@@ -49,7 +49,7 @@ open class ConnectionManager(
     }
 
     val dispatcher
-        get () = executor.asCoroutineDispatcher()
+        get() = executor.asCoroutineDispatcher()
 
     val coroutineScope
         get () = scope
@@ -64,6 +64,7 @@ open class ConnectionManager(
             setSharedExecutor(executor)
         }
     }
+
 
     /**
      * Enables TLS (Transport Layer Security) for RabbitMQ connections.

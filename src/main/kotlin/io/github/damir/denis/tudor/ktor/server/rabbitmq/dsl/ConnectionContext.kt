@@ -3,6 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,15 +36,13 @@ suspend inline fun ConnectionContext.channel(
     crossinline block: suspend ChannelContext.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(connectionManager.dispatcher) {
-            getChannel(id, getConnectionId(connection)).also {
-                coroutineScope.launch(dispatcher) {
-                    it.also { ChannelContext(connectionManager, it).apply { block() } }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeChannel(id)
-                    }
+        getChannel(id, getConnectionId(connection)).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                it.also { ChannelContext(connectionManager, it).apply { block() } }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeChannel(id)
                 }
             }
         }
@@ -66,17 +65,15 @@ suspend inline fun ConnectionContext.channel(
     crossinline block: suspend ChannelContext.() -> Unit
 ) = runCatching {
     with(connectionManager) {
-        withContext(connectionManager.dispatcher) {
-            val connectionId = getConnectionId(connection)
-            val channelId = Random.nextInt(1000, 5000)
-            connectionManager.getChannel(channelId, connectionId).also {
-                coroutineScope.launch(dispatcher) {
-                    it.also { ChannelContext(connectionManager, it).apply { block() } }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeChannel(channelId)
-                    }
+        val connectionId = getConnectionId(connection)
+        val channelId = Random.nextInt(1000, 5000)
+        connectionManager.getChannel(channelId, connectionId).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                it.also { ChannelContext(connectionManager, it).apply { block() } }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeChannel(channelId)
                 }
             }
         }
@@ -101,15 +98,13 @@ suspend inline fun ConnectionContext.libChannel(
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
         val channelId = Random.nextInt(1000, 5000)
-        connectionManager.getChannel(channelId, connectionId).also {
-            getChannel(channelId, connectionId).also {
-                coroutineScope.launch(dispatcher) {
-                    it.apply { block() }
-                }.let { job ->
-                    if (autoClose) {
-                        job.join()
-                        closeChannel(channelId)
-                    }
+        getChannel(channelId, connectionId).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                it.apply { block() }
+            }.let { job ->
+                if (autoClose) {
+                    job.join()
+                    closeChannel(channelId)
                 }
             }
         }

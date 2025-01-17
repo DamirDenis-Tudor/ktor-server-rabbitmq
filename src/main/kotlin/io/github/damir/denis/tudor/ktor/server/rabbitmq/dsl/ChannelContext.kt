@@ -3,6 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 import com.rabbitmq.client.Channel
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.*
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,7 +33,7 @@ open class ChannelContext(
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) { BasicAckBuilder(channel).apply { this.block() }.build() }
+    withContext(Dispatchers.rabbitMQ) { BasicAckBuilder(channel).apply { this.block() }.build() }
 }
 
 /**
@@ -87,9 +88,7 @@ suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) =
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicConsumeBuilder(connectionManager, channel).apply { this.block() }.build()
-    }
+    BasicConsumeBuilder(connectionManager, channel).apply { this.block() }.build()
 }
 
 /**
@@ -102,9 +101,7 @@ suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() ->
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicGetBuilder(channel).apply { this.block() }.build()
-    }
+    BasicGetBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -117,9 +114,7 @@ suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) =
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicNackBuilder(channel).apply { this.block() }.build()
-    }
+    BasicNackBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -132,9 +127,7 @@ suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit)
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicPublishBuilder(channel).apply { this.block() }.build()
-    }
+    BasicPublishBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -147,9 +140,7 @@ suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() ->
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicQosBuilder(channel).apply { this.block() }.build()
-    }
+    BasicQosBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -162,9 +153,7 @@ suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) =
  */
 @RabbitDslMarker
 suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        BasicRejectBuilder(channel).apply { this.block() }.build()
-    }
+    BasicRejectBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -177,9 +166,7 @@ suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> U
  */
 @RabbitDslMarker
 suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        ConsumerCountBuilder(channel).apply { this.block() }.build()
-    }
+    ConsumerCountBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -192,9 +179,7 @@ suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() 
  */
 @RabbitDslMarker
 suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        ExchangeDeclareBuilder(channel).apply { this.block() }.build()
-    }
+    ExchangeDeclareBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -207,9 +192,7 @@ suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder
  */
 @RabbitDslMarker
 suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        ExchangeDeleteBuilder(channel).apply { this.block() }.build()
-    }
+    ExchangeDeleteBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -222,9 +205,7 @@ suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.(
  */
 @RabbitDslMarker
 suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        MessageCountBuilder(channel).apply { this.block() }.build()
-    }
+    MessageCountBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -237,9 +218,7 @@ suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() ->
  */
 @RabbitDslMarker
 suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        QueueBindBuilder(channel).apply { this.block() }.build()
-    }
+    QueueBindBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -249,9 +228,7 @@ suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit)
  */
 @RabbitDslMarker
 suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        QueueDeclareBuilder(channel).apply { this.block() }.build()
-    }
+    QueueDeclareBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -264,9 +241,7 @@ suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() ->
  */
 @RabbitDslMarker
 suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        QueueDeleteBuilder(channel).apply { this.block() }.build()
-    }
+    QueueDeleteBuilder(channel).apply { this.block() }.build()
 }
 
 /**
@@ -279,7 +254,5 @@ suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> U
  */
 @RabbitDslMarker
 suspend fun ChannelContext.queueUnbind(block: suspend QueueUnbindBuilder.() -> Unit) = runCatching {
-    withContext(connectionManager.dispatcher) {
-        QueueUnbindBuilder(channel).apply { this.block() }.build()
-    }
+    QueueUnbindBuilder(channel).apply { this.block() }.build()
 }
