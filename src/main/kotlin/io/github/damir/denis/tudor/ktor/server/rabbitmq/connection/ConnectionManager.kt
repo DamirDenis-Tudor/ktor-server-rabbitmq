@@ -43,7 +43,7 @@ open class ConnectionManager(
     private val executor = Executors.newFixedThreadPool(config.dispatcherThreadPollSize) { runnable ->
         val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
 
-        logger.debug("Creating new thread <$threadName> with ID <$threadName>")
+        logger.debug("Creating new thread with ID <$threadName>")
 
         Thread(runnable, threadName).apply { isDaemon = true }
     }
@@ -137,11 +137,11 @@ open class ConnectionManager(
     @Synchronized
     fun getConnection(id: String = config.defaultConnectionName): Connection = retry {
         if (connectionCache.containsKey(id)) {
-            logger.trace("Connection with id: <$id> taken from cache.")
+            logger.debug("Connection with id: <$id> taken from cache.")
         }
 
         val connection = connectionCache.getOrPut(id) {
-            logger.trace("Creating new connection with id: <$id>.")
+            logger.debug("Creating new connection with id: <$id>.")
             connectionFactory.newConnection(id)
         }
 
@@ -171,7 +171,7 @@ open class ConnectionManager(
         connectionCache[connectionId]?.close()
         connectionCache.remove(connectionId)
 
-        logger.trace("Connection with id: <$connectionId>, closed")
+        logger.debug("Connection with id: <$connectionId>, closed")
     }
 
     /**
@@ -188,11 +188,11 @@ open class ConnectionManager(
         val id = getChannelKey(connectionId, channelId)
 
         if (channelCache.containsKey(id)) {
-            logger.trace("Channel with id: <$id> will be taken from cache.")
+            logger.debug("Channel with id: <$id> will be taken from cache.")
         }
 
         val channel = channelCache.getOrPut(id) {
-            logger.trace("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
+            logger.debug("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
             getConnection(connectionId).createChannel(channelId)
         }
 
