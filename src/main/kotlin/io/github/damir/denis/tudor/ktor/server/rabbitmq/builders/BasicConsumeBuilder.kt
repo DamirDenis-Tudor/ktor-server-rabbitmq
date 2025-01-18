@@ -8,9 +8,13 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 
@@ -41,7 +45,7 @@ class BasicConsumeBuilder(
         exclusive = false
         arguments = emptyMap()
         deliverCallback = DeliverCallback { _, delivery ->
-            receiverChannel.trySend(
+            receiverChannel.trySendBlocking(
                 delivery.envelope.deliveryTag to delivery.body.toString(Charsets.UTF_8)
             )
         }
