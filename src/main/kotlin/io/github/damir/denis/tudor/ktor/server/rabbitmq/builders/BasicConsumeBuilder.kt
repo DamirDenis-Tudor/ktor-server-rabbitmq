@@ -8,16 +8,15 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
+import io.ktor.utils.io.*
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
 
+@OptIn(InternalAPI::class)
 @RabbitDslMarker
 class BasicConsumeBuilder(
     val connectionManager: ConnectionManager,
@@ -36,6 +35,9 @@ class BasicConsumeBuilder(
     private var shutdownSignalCallback: ConsumerShutdownSignalCallback by Delegator()
 
     var dispatcher: CoroutineDispatcher = connectionManager.dispatcher
+    var coroutinePollSize: Int = 1
+
+    @InternalAPI
     var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<Long, String>>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
@@ -55,9 +57,11 @@ class BasicConsumeBuilder(
 
     @RabbitDslMarker
     inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
-        connectionManager.coroutineScope.launch(dispatcher) {
-            receiverChannel.consumeAsFlow().collect { (deliveryTag, message) ->
-                callback(deliveryTag, Json.decodeFromString<T>(message))
+        repeat(coroutinePollSize) {
+            connectionManager.coroutineScope.launch(dispatcher) {
+                receiverChannel.consumeAsFlow().collect { (deliveryTag, message) ->
+                    callback(deliveryTag, Json.decodeFromString<T>(message))
+                }
             }
         }
     }
