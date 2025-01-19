@@ -10,7 +10,9 @@ import java.io.FileInputStream
 import java.lang.Thread.sleep
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
@@ -40,22 +42,17 @@ open class ConnectionManager(
     private val logger = KtorSimpleLogger(this.javaClass.name)
 
     private val threadIdCounter = AtomicInteger(-1)
-    private val executor = Executors.newFixedThreadPool(config.dispatcherThreadPollSize) { runnable ->
-        val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
 
-        logger.debug("Creating new thread with ID <$threadName>")
-
-        Thread(runnable, threadName).apply { isDaemon = true }
-    }
+    private val executor = createExecutor()
 
     val dispatcher
         get() = executor.asCoroutineDispatcher()
 
     val coroutineScope
-        get () = scope
+        get() = scope
 
     val configuration
-        get () = config
+        get() = config
 
     init {
         connectionFactory.apply {
@@ -65,6 +62,30 @@ open class ConnectionManager(
         }
     }
 
+    /**
+     * Creates and returns an ExecutorService based on the provided configuration.
+     *
+     * This method checks the configuration to determine whether a cached thread pool
+     * or a fixed-size thread pool should be used. The choice depends on the value of
+     * `config.dispatcherThreadPollSize`. A custom `ThreadFactory` is used to name
+     * threads uniquely and mark them as daemon threads, ensuring they don't block JVM shutdown.
+     *
+     * @return An ExecutorService either as a cached thread pool or fixed-size thread pool.
+     */
+    private fun createExecutor(): ExecutorService {
+        val threadFactory = ThreadFactory { runnable ->
+            val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
+            logger.debug("Creating new thread with ID <$threadName>")
+            Thread(runnable, threadName).apply { isDaemon = true }
+        }
+        return if (config.dispatcherThreadPollSize == 0) {
+            logger.debug("Creating newCachedThreadPool.")
+            Executors.newCachedThreadPool(threadFactory)
+        } else {
+            logger.debug("Creating newFixedThreadPool with size ${config.dispatcherThreadPollSize}.")
+            Executors.newFixedThreadPool(config.dispatcherThreadPollSize, threadFactory)
+        }
+    }
 
     /**
      * Enables TLS (Transport Layer Security) for RabbitMQ connections.
