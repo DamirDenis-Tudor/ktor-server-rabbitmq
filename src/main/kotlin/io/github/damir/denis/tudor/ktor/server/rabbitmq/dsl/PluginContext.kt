@@ -44,7 +44,7 @@ internal fun PluginContext.getChannelContext(channel: Channel): ChannelContext =
     ChannelContext(connectionManager, channel)
 
 /**
- * Executes a block of code within the default channel context.
+ * Executes a block of code within the `default channel context by launching a coroutine`.
  *
  * This function allows operations to be performed directly on the default channel
  * provided by the `ConnectionManager`.

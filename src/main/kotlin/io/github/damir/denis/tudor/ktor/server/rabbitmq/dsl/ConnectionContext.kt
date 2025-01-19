@@ -51,37 +51,6 @@ suspend inline fun ConnectionContext.channel(
 
 /**
  * Provides a DSL extension to create a new channel within the connection context,
- * execute a given block of operations, and optionally close the channel after execution.
- *
- * @param autoClose Whether the channel should be automatically closed after the block is executed.
- * @param block The block of operations to execute within the channel context.
- *
- * @author Damir Denis-Tudor
- * @since 1.2.3
- */
-@RabbitDslMarker
-suspend inline fun ConnectionContext.channel(
-    autoClose: Boolean = false,
-    crossinline block: suspend ChannelContext.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        val connectionId = getConnectionId(connection)
-        val channelId = Random.nextInt(1000, 5000)
-        connectionManager.getChannel(channelId, connectionId).also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                it.also { ChannelContext(connectionManager, it).apply { block() } }
-            }.let { job ->
-                if (autoClose) {
-                    job.join()
-                    closeChannel(channelId)
-                }
-            }
-        }
-    }
-}
-
-/**
- * Provides a DSL extension to create a new channel within the connection context,
  * execute a given suspending block directly on the channel, and optionally close the channel after execution.
  *
  * @param autoClose Whether the channel should be automatically closed after the block is executed.
@@ -92,12 +61,13 @@ suspend inline fun ConnectionContext.channel(
  */
 @RabbitDslMarker
 suspend inline fun ConnectionContext.libChannel(
+    id: Int,
     autoClose: Boolean = false,
     crossinline block: suspend Channel.() -> Unit
 ) = runCatching {
     with(connectionManager) {
         val connectionId = getConnectionId(connection)
-        val channelId = Random.nextInt(1000, 5000)
+        val channelId = id
         getChannel(channelId, connectionId).also {
             coroutineScope.launch(Dispatchers.rabbitMQ) {
                 it.apply { block() }
