@@ -16,7 +16,7 @@ class ConnectionConfig(config: ApplicationConfig) {
     var defaultConnectionName: String = config.tryGetString("defaultConnectionName") ?: "default_connection"
     var connectionAttempts: Int = config.tryGetString("connectionAttempts")?.toInt() ?: 10
     var attemptDelay: Int = config.tryGetString("attemptDelay")?.toInt() ?: 5
-    var dispatcherThreadPollSize: Int = config.tryGetString("dispatcherThreadPollSize")?.toInt() ?: 8
+    var dispatcherThreadPollSize: Int = config.tryGetString("dispatcherThreadPollSize")?.toInt() ?: 0
     var consumerChannelCoroutineSize: Int = config.tryGetString("consumerChannelCoroutineSize")?.toInt() ?: 10_000
 
     var tlsEnabled: Boolean = config.tryGetString("tls.enabled")?.toBoolean() == true
@@ -28,7 +28,7 @@ class ConnectionConfig(config: ApplicationConfig) {
     fun verify(){
         require(connectionAttempts > 0) { "connectionAttempts must be > 0" }
         require(attemptDelay > 0) { "attemptDelay must be > 0" }
-        require(dispatcherThreadPollSize > 0) { "dispatcherThreadPollSize must be > 0" }
+        require(dispatcherThreadPollSize >= 0) { "dispatcherThreadPollSize must be >= 0" }
         require(consumerChannelCoroutineSize > 0) { "consumerChannelCoroutineSize must be > 0" }
         require(defaultConnectionName.isNotEmpty()) { "defaultConnectionName cannot be empty" }
         require(uri.isNotEmpty()) { "uri cannot be empty" }
