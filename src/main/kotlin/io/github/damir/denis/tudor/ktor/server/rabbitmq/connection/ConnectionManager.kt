@@ -41,12 +41,11 @@ open class ConnectionManager(
 
     private val logger = KtorSimpleLogger(this.javaClass.name)
 
-    private val threadIdCounter = AtomicInteger(-1)
-
     private val executor = createExecutor()
+    private val convertedDispatcher = executor.asCoroutineDispatcher()
 
     val dispatcher
-        get() = executor.asCoroutineDispatcher()
+        get() = convertedDispatcher
 
     val coroutineScope
         get() = scope
@@ -59,6 +58,7 @@ open class ConnectionManager(
             if (config.tlsEnabled) enableTLS()
             setUri(config.uri)
             setSharedExecutor(executor)
+            isAutomaticRecoveryEnabled = true;
         }
     }
 
@@ -73,6 +73,7 @@ open class ConnectionManager(
      * @return An ExecutorService either as a cached thread pool or fixed-size thread pool.
      */
     private fun createExecutor(): ExecutorService {
+        val threadIdCounter = AtomicInteger(-1)
         val threadFactory = ThreadFactory { runnable ->
             val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
             logger.debug("Creating new thread with ID <$threadName>")
@@ -139,9 +140,13 @@ open class ConnectionManager(
                 .onSuccess {
                     return@retry it
                 }.onFailure {
-                    if (it is InterruptedException) throw it
-                    logger.warn("${it.message}. Attempt ${index + 1} failed: ${it.message}.")
-                    sleep(config.attemptDelay * 1000L)
+                    when {
+                        it is java.net.ConnectException -> {
+                            logger.warn("Attempt ${index + 1} failed: $it.")
+                            sleep(config.attemptDelay * 1000L)
+                        }
+                        else -> throw it
+                    }
                 }
         }
 
@@ -215,7 +220,7 @@ open class ConnectionManager(
 
         val channel = channelCache.getOrPut(id) {
             logger.debug("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
-            getConnection(connectionId).createChannel(channelId)
+            getConnection(connectionId).createChannel()
         }
 
         if (!channel.isOpen) {

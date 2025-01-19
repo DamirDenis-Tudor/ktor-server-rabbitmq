@@ -3,10 +3,6 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl
 import com.rabbitmq.client.Channel
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.builders.*
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Represents a context for a RabbitMQ channel, providing a scope for performing
