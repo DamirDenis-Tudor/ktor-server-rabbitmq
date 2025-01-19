@@ -6,8 +6,6 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionMan
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 /**
  * Represents a context for a RabbitMQ connection, allowing for scoped operations
