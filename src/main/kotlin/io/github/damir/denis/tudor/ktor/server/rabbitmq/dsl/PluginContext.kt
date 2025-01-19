@@ -4,13 +4,8 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 /**
  * The PluginContext is used to manage actions within a RabbitMQ context.
