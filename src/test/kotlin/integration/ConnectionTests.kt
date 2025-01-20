@@ -1,15 +1,19 @@
+package integration
+
+import channelTest
+import connectionTest
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
+import io.ktor.server.application.install
+import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
+import rabbitmqTest
 import kotlin.test.assertNotEquals
-
 
 class ConnectionTests {
 
@@ -64,7 +68,7 @@ class ConnectionTests {
                     val connection1 = connectionTest(id = "connection_1") {}
                     val connection1Reused = connectionTest(id = "connection_1") {}
 
-                    assertEquals(connection1Reused, connection1)
+                    Assertions.assertEquals(connection1Reused, connection1)
                 }
             }
         }
@@ -86,7 +90,7 @@ class ConnectionTests {
                     val channel = channelTest(id = 99) {}
                     val channelReused = channelTest(id = 99) {}
 
-                    assertEquals(channel, channelReused)
+                    Assertions.assertEquals(channel, channelReused)
                 }
             }
         }
@@ -114,4 +118,3 @@ class ConnectionTests {
         }
     }
 }
-
