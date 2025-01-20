@@ -244,6 +244,6 @@ open class ConnectionManager(
         channelCache[id]?.close()
         channelCache.remove(id)
 
-        logger.debug("Channel with id: <$channelId>, closed")
+        logger.debug("Channel with id: <$channelId> for connection with id <$connectionId>, closed")
     }
 }

@@ -3,6 +3,9 @@ package integration
 import channelTest
 import connectionTest
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.channel
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.connection
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.rabbitmq
 import io.ktor.server.application.install
 import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.test.runTest
@@ -38,7 +41,7 @@ class ConnectionTests {
     }
 
     @Test
-    fun `test install with default connection`() = testApplication {
+    fun `test install with default channel`() = testApplication {
         application {
             install(RabbitMQ) {
                 connectionAttempts = 3
@@ -47,7 +50,7 @@ class ConnectionTests {
             }
 
             rabbitmqTest {
-
+                assert(channel.isOpen)
             }
         }
     }
@@ -97,7 +100,30 @@ class ConnectionTests {
     }
 
     @Test
-    fun `test autoclose`() = testApplication {
+    fun `test channel reuse within a connection block`() = testApplication {
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+            }
+        }
+
+        application {
+            runTest {
+                rabbitmqTest {
+                    connectionTest(id = "test") {
+                        val channelDefault = channelTest {}
+
+                        Assertions.assertEquals(channel, channelDefault)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test autoclose channel`() = testApplication {
 
         application {
             install(RabbitMQ) {
@@ -113,6 +139,28 @@ class ConnectionTests {
                     val channel2 = channelTest(id = 99) {}
 
                     assertNotEquals(channel1, channel2)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test autoclose connection channel`() = testApplication {
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+            }
+        }
+        application {
+            runTest {
+                rabbitmqTest {
+                    connectionTest(id = "test") {
+                        val channel1 = channelTest(id = 99, autoClose = true) {}
+                        val channel2 = channelTest(id = 99) {}
+                        assertNotEquals(channel1, channel2)
+                    }
                 }
             }
         }
