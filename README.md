@@ -26,9 +26,10 @@
 2. [Queue Binding Example](#queue-binding-example)
 3. [Producer Example](#producer-example)
 4. [Consumer Example](#consumer-example)
-5. [Library Calls Example](#library-calls-example)
-6. [Dead Letter Queue Example](#dead-letter-queue-example)
-7. [Logging](#logging)
+5. [Advanced Consumer Example](#advanced-consumer-example)
+6. [Library Calls Example](#library-calls-example)
+7. [Dead Letter Queue Example](#dead-letter-queue-example)
+8. [Logging](#logging)
 
 ### Installation
 
@@ -113,8 +114,31 @@ rabbitmq {
         basicConsume {
             autoAck = true
             queue = "demo-queue"
+            dispacher = Dispacher.IO
+            coroutinePollSize = 1_000
             deliverCallback<String> { tag, message ->
                 logger.info("Received message: $message")
+                delay(30)
+            }
+        }
+    }
+}
+
+or
+
+rabbitmq {
+    connection(id = "consume") {
+        repeat(5) {
+            basicConsume {
+                autoAck = true
+                queue = "demo-queue"
+                dispacher = Dispacher.IO
+                deliverCallback<String> { tag, message ->
+                    launch {
+                        logger.info("Received message: $message")
+                        delay(30)
+                    }
+                }
             }
         }
     }
