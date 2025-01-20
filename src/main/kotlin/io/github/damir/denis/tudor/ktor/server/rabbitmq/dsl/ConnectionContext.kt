@@ -14,7 +14,67 @@ import kotlinx.coroutines.launch
  * @author Damir Denis-Tudor
  * @since 1.2.3
  */
-class ConnectionContext(val connectionManager: ConnectionManager, val connection: Connection)
+class ConnectionContext(
+    override val connectionManager: ConnectionManager,
+    val connection: Connection,
+    defaultChannel: Channel,
+) : ChannelContext(
+    connectionManager = connectionManager,
+    channel = defaultChannel
+)
+
+/**
+ * Executes a block of code within the `default channel context of current connection by launching a coroutine`.
+ *
+ * This function allows operations to be performed directly on the default channel of current connection provided by the `ConnectionManager`.
+ *
+ * Essentially, there is one difference between the following code snippets (`in the second example a coroutine is launched`):
+ *
+ * ```kotlin
+ * rabbitmq {
+ *      connection(id = "consume") {
+ *          basicConsume {
+ *              autoAck = true
+ *              queue = "demo-queue"
+ *              deliverCallback<String> { tag, message ->
+ *                  logger.info("Received message: $message")
+ *              }
+ *          }
+ *      }
+ * }
+ *
+ * rabbitmq {
+ *      connection(id = "consume") {
+ *          channel{
+ *              basicConsume {
+ *                  autoAck = true
+ *                  queue = "demo-queue"
+ *                  deliverCallback<String> { tag, message ->
+ *                      logger.info("Received message: $message")
+ *                  }
+ *              }
+ *          }
+ *      }
+ * }
+ * ```
+ *
+ * @param block A suspendable block of code to execute within the `ChannelContext`.
+ *
+ * @author Damir Denis-Tudor
+ * @since 1.3.3
+ */
+@RabbitDslMarker
+fun ConnectionContext.channel(
+    block: suspend ChannelContext.() -> Unit
+) = runCatching {
+    with(connectionManager) {
+        getChannel(connectionId = getConnectionId(connection)).also {
+            coroutineScope.launch(Dispatchers.rabbitMQ) {
+                ChannelContext(connectionManager, it).apply { block() }
+            }
+        }
+    }
+}
 
 /**
  * Provides a DSL extension to create or retrieve a specific channel within the connection context,
@@ -40,7 +100,7 @@ suspend inline fun ConnectionContext.channel(
             }.let { job ->
                 if (autoClose) {
                     job.join()
-                    closeChannel(id)
+                    closeChannel(id, getConnectionId(connection))
                 }
             }
         }
@@ -72,7 +132,7 @@ suspend inline fun ConnectionContext.libChannel(
             }.let { job ->
                 if (autoClose) {
                     job.join()
-                    closeChannel(channelId)
+                    closeChannel(channelId, getConnectionId(connection))
                 }
             }
         }

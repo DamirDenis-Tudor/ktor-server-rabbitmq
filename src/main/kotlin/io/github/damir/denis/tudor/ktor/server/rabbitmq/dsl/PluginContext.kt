@@ -22,29 +22,16 @@ import kotlinx.coroutines.launch
 class PluginContext(
     override val connectionManager: ConnectionManager
 ) : ChannelContext(
-    connectionManager,
-    connectionManager.getChannel()
+    connectionManager = connectionManager,
+    channel = connectionManager.getChannel()
 )
 
 /**
- * Retrieves a `ChannelContext` for the `Channel`.
+ * Executes a block of code within the `default channel context of the default connection by launching a coroutine`.
  *
- * @param channel The RabbitMQ `Channel` to wrap in a `ChannelContext`.
- * @return A `ChannelContext` tied to the specified `Channel`.
+ * This function allows operations to be performed directly on the default channel provided by the `ConnectionManager`.
  *
- * @author Damir Denis-Tudor
- * @since 1.2.3
- */
-internal fun PluginContext.getChannelContext(channel: Channel): ChannelContext =
-    ChannelContext(connectionManager, channel)
-
-/**
- * Executes a block of code within the `default channel context by launching a coroutine`.
- *
- * This function allows operations to be performed directly on the default channel
- * provided by the `ConnectionManager`.
- *
- * Essentially, there is no difference between the following code snippets:
+ * Essentially, there is one difference between the following code snippets (`in the second example a coroutine is launched`):
  *
  * ```kotlin
  * rabbitmq {
@@ -78,7 +65,10 @@ fun PluginContext.channel(
     with(connectionManager) {
         getChannel().also {
             coroutineScope.launch(Dispatchers.rabbitMQ) {
-                getChannelContext(it).apply { block() }
+                ChannelContext(
+                    connectionManager = connectionManager,
+                    channel = it
+                ).apply { block() }
             }
         }
     }
@@ -108,9 +98,10 @@ suspend fun PluginContext.channel(
     with(connectionManager) {
         getChannel(id).also {
             coroutineScope.launch(Dispatchers.rabbitMQ) {
-                getChannelContext(it).apply {
-                    block()
-                }
+                ChannelContext(
+                    connectionManager = connectionManager,
+                    channel = it
+                ).apply { block() }
             }.let { job ->
                 if (autoClose) {
                     job.join()
@@ -157,7 +148,8 @@ suspend fun PluginContext.libChannel(
 }
 
 /**
- * Executes a block of code within a specific connection context.
+ * Executes a block of code within a specific connection context. A default channel will be allocated
+ * in order to enhance the usability
  *
  * This function allows operations to be performed on a connection identified by its `id`.
  * Optionally, the connection can be automatically closed after execution.
@@ -169,7 +161,7 @@ suspend fun PluginContext.libChannel(
  * @param block A suspendable block of code to execute within the `ConnectionContext`.
  *
  * @author Damir Denis-Tudor
- * @since 1.2.2
+ * @since 1.3.3
  */
 @RabbitDslMarker
 suspend fun PluginContext.connection(
@@ -180,7 +172,11 @@ suspend fun PluginContext.connection(
     with(connectionManager) {
         getConnection(id).also {
             coroutineScope.launch(Dispatchers.rabbitMQ) {
-                ConnectionContext(connectionManager, it).apply { block() }
+                ConnectionContext(
+                    connectionManager = connectionManager,
+                    connection =  it,
+                    defaultChannel = getChannel(connectionId = id)
+                ).apply { block() }
             }.let { job ->
                 if (autoClose) {
                     job.join()

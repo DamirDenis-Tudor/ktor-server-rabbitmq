@@ -238,7 +238,7 @@ open class ConnectionManager(
      * @param connectionId the ID of the associated connection.
      */
     @Synchronized
-    fun closeChannel(channelId: Int, connectionId: String = config.defaultConnectionName) {
+    fun closeChannel(channelId: Int = 1, connectionId: String = config.defaultConnectionName) {
         val id = getChannelKey(connectionId, channelId)
 
         channelCache[id]?.close()
