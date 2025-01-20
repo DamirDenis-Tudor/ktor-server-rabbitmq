@@ -70,6 +70,8 @@ tasks {
             events("passed", "skipped", "failed")
             showCauses = true
             showStackTraces = true
+            showExceptions = true
+            info.events = debug.events
         }
     }
 }
