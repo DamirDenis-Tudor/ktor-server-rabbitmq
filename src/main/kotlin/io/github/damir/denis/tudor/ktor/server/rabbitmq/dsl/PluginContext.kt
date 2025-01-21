@@ -61,15 +61,13 @@ class PluginContext(
 @RabbitDslMarker
 fun PluginContext.channel(
     block: suspend ChannelContext.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        getChannel().also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                ChannelContext(
-                    connectionManager = connectionManager,
-                    channel = it
-                ).apply { block() }
-            }
+) = with(connectionManager) {
+    getChannel().also {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
+            ChannelContext(
+                connectionManager = connectionManager,
+                channel = it
+            ).apply { block() }
         }
     }
 }
@@ -94,19 +92,17 @@ suspend fun PluginContext.channel(
     id: Int,
     autoClose: Boolean = false,
     block: suspend ChannelContext.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        getChannel(id).also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                ChannelContext(
-                    connectionManager = connectionManager,
-                    channel = it
-                ).apply { block() }
-            }.let { job ->
-                if (autoClose) {
-                    job.join()
-                    closeChannel(id)
-                }
+) = with(connectionManager) {
+    getChannel(id).also {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
+            ChannelContext(
+                connectionManager = connectionManager,
+                channel = it
+            ).apply { block() }
+        }.let { job ->
+            if (autoClose) {
+                job.join()
+                closeChannel(id)
             }
         }
     }
@@ -132,16 +128,14 @@ suspend fun PluginContext.libChannel(
     id: Int,
     autoClose: Boolean = false,
     block: suspend Channel.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        getChannel(id).also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                it.apply { block() }
-            }.let { job ->
-                if (autoClose) {
-                    job.join()
-                    closeChannel(id)
-                }
+) = with(connectionManager) {
+    getChannel(id).also {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
+            it.apply { block() }
+        }.let { job ->
+            if (autoClose) {
+                job.join()
+                closeChannel(id)
             }
         }
     }
@@ -168,20 +162,18 @@ suspend fun PluginContext.connection(
     id: String,
     autoClose: Boolean = false,
     block: suspend ConnectionContext.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        getConnection(id).also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                ConnectionContext(
-                    connectionManager = connectionManager,
-                    connection =  it,
-                    defaultChannel = getChannel(connectionId = id)
-                ).apply { block() }
-            }.let { job ->
-                if (autoClose) {
-                    job.join()
-                    closeConnection(id)
-                }
+) = with(connectionManager) {
+    getConnection(id).also {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
+            ConnectionContext(
+                connectionManager = connectionManager,
+                connection = it,
+                defaultChannel = getChannel(connectionId = id)
+            ).apply { block() }
+        }.let { job ->
+            if (autoClose) {
+                job.join()
+                closeConnection(id)
             }
         }
     }
@@ -207,16 +199,14 @@ suspend fun PluginContext.libConnection(
     id: String,
     autoClose: Boolean = false,
     block: suspend Connection.() -> Unit
-) = runCatching {
-    with(connectionManager) {
-        getConnection(id).also {
-            coroutineScope.launch(Dispatchers.rabbitMQ) {
-                it.apply { block() }
-            }.let { job ->
-                if (autoClose) {
-                    job.join()
-                    closeConnection(id)
-                }
+) = with(connectionManager) {
+    getConnection(id).also {
+        coroutineScope.launch(Dispatchers.rabbitMQ) {
+            it.apply { block() }
+        }.let { job ->
+            if (autoClose) {
+                job.join()
+                closeConnection(id)
             }
         }
     }
