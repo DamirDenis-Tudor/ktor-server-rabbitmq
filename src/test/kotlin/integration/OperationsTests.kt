@@ -1,18 +1,14 @@
 package integration
 
-import channelTest
 import connectionTest
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
-import kotlinx.serialization.Serializable
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import io.ktor.util.Digest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -22,7 +18,6 @@ import rabbitmqTest
 import java.lang.Thread.sleep
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class OperationsTests {
 
@@ -63,17 +58,19 @@ class OperationsTests {
 
         application {
             rabbitmqTest {
-                queueBind {
-                    queue = "dlq"
-                    exchange = "dlx"
-                    routingKey = "dlq-dlx"
-                    queueDeclare {
+                connectionTest(id = "test") {
+                    queueBind {
                         queue = "dlq"
-                        durable = true
-                    }
-                    exchangeDeclare {
                         exchange = "dlx"
-                        type = "direct"
+                        routingKey = "dlq-dlx"
+                        queueDeclare {
+                            queue = "dlq"
+                            durable = true
+                        }
+                        exchangeDeclare {
+                            exchange = "dlx"
+                            type = "direct"
+                        }
                     }
                 }
             }
@@ -131,7 +128,7 @@ class OperationsTests {
                     }
                 }
 
-                assertEquals(messageCount { queue = "test-queue" }.getOrNull(), 10)
+                assertEquals(messageCount { queue = "test-queue" }, 10)
 
                 basicConsume {
                     queue = "test-queue"
@@ -142,11 +139,11 @@ class OperationsTests {
                             requeue = false
                         }
                     }
-                }.getOrThrow()
+                }
 
                 sleep(2_000)
 
-                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 10)
+                assertEquals(messageCount { queue = "dlq" }, 10)
 
                 basicConsume {
                     queue = "dlq"
@@ -158,7 +155,7 @@ class OperationsTests {
 
                 sleep(2_000)
 
-                assertEquals(messageCount { queue = "dlq" }.getOrNull(), 0)
+                assertEquals(messageCount { queue = "dlq" }, 0)
             }
         }
     }

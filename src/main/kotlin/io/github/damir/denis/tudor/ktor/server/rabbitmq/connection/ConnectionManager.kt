@@ -145,6 +145,7 @@ open class ConnectionManager(
                             logger.warn("Attempt ${index + 1} failed: $it.")
                             sleep(config.attemptDelay * 1000L)
                         }
+
                         else -> throw it
                     }
                 }
@@ -169,7 +170,7 @@ open class ConnectionManager(
 
         val connection = connectionCache.getOrPut(id) {
             logger.debug("Creating new connection with id: <$id>.")
-            connectionFactory.newConnection(id)
+            connectionFactory.newConnection(id) ?: error("Connection with id <$id> was not created.")
         }
 
         if (!connection.isOpen)
@@ -220,7 +221,7 @@ open class ConnectionManager(
 
         val channel = channelCache.getOrPut(id) {
             logger.debug("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
-            getConnection(connectionId).createChannel()
+            getConnection(connectionId).createChannel() ?: error("Could not allocate this channel id <$channelId>. ")
         }
 
         if (!channel.isOpen) {
@@ -245,5 +246,15 @@ open class ConnectionManager(
         channelCache.remove(id)
 
         logger.debug("Channel with id: <$channelId> for connection with id <$connectionId>, closed")
+    }
+
+    /**
+     * Closes all active RabbitMQ connections.
+     *
+     * This method iterates through all connections in the connection cache and closes each one.
+     */
+    @Synchronized
+    fun close() {
+        connectionCache.values.forEach { connection -> connection.close() }
     }
 }

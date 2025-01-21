@@ -3,6 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionConfig
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.connection.ConnectionManager
 import io.ktor.server.application.*
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.util.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,11 @@ val RabbitMQ = createApplicationPlugin(
 
     with(ConnectionManager(application, pluginConfig)) {
         RabbitMQDispatcherHolder.dispatcher = dispatcher
+
         application.attributes.put(ConnectionManagerKey, this)
+        application.monitor.subscribe(ApplicationStopping) {
+            close()
+        }
     }
 }
 
