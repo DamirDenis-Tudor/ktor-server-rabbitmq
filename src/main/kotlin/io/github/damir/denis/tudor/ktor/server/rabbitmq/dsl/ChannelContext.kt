@@ -28,9 +28,8 @@ open class ChannelContext(
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) =
      BasicAckBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Consumes messages from a queue using a builder for configurable options.
@@ -83,9 +82,8 @@ suspend fun ChannelContext.basicAck(block: suspend BasicAckBuilder.() -> Unit) =
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() -> Unit) =
     BasicConsumeBuilder(connectionManager, channel).apply { this.block() }.build()
-}
 
 /**
  * Retrieves a single message from a queue using a builder for customization.
@@ -96,9 +94,8 @@ suspend fun ChannelContext.basicConsume(block: suspend BasicConsumeBuilder.() ->
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) =
     BasicGetBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Negatively acknowledges a message using a builder for customizable parameters.
@@ -109,9 +106,8 @@ suspend fun ChannelContext.basicGet(block: suspend BasicGetBuilder.() -> Unit) =
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit) =
     BasicNackBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Publishes a message to an exchange using a builder for setting up the message properties.
@@ -122,9 +118,8 @@ suspend fun ChannelContext.basicNack(block: suspend BasicNackBuilder.() -> Unit)
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() -> Unit) =
     BasicPublishBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Configures the Quality of Service (QoS) settings for the channel using a builder.
@@ -135,9 +130,8 @@ suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() ->
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) =
     BasicQosBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Rejects a message using a builder for customizable parameters.
@@ -148,9 +142,8 @@ suspend fun ChannelContext.basicQos(block: suspend BasicQosBuilder.() -> Unit) =
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> Unit) =
     BasicRejectBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Retrieves the consumer count for a queue using a builder for setup.
@@ -161,9 +154,8 @@ suspend fun ChannelContext.basicReject(block: suspend BasicRejectBuilder.() -> U
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() -> Unit) =
     ConsumerCountBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Declares an exchange using a builder for customizable properties.
@@ -174,9 +166,8 @@ suspend fun ChannelContext.consumerCount(block: suspend ConsumerCountBuilder.() 
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder.() -> Unit) =
     ExchangeDeclareBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Deletes an exchange using a builder for setup.
@@ -187,9 +178,8 @@ suspend fun ChannelContext.exchangeDeclare(block: suspend ExchangeDeclareBuilder
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.() -> Unit) =
     ExchangeDeleteBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Retrieves the message count for a queue using a builder for setup.
@@ -200,9 +190,8 @@ suspend fun ChannelContext.exchangeDelete(block: suspend ExchangeDeleteBuilder.(
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() -> Unit) =
     MessageCountBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Binds a queue to an exchange using a builder for customizable parameters.
@@ -213,9 +202,9 @@ suspend fun ChannelContext.messageCount(block: suspend MessageCountBuilder.() ->
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit) =
     QueueBindBuilder(channel).apply { this.block() }.build()
-}
+
 
 /**
  * Declares a queue using a builder for customizable properties.
@@ -223,9 +212,9 @@ suspend fun ChannelContext.queueBind(block: suspend QueueBindBuilder.() -> Unit)
  * @param block A configuration block for setting up the queue declaration.
  */
 @RabbitDslMarker
-suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() -> Unit) =
     QueueDeclareBuilder(channel).apply { this.block() }.build()
-}
+
 
 /**
  * Deletes a queue using a builder for setup.
@@ -236,9 +225,8 @@ suspend fun ChannelContext.queueDeclare(block: suspend QueueDeclareBuilder.() ->
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> Unit) =
     QueueDeleteBuilder(channel).apply { this.block() }.build()
-}
 
 /**
  * Unbinds a queue from an exchange using a builder for customizable parameters.
@@ -249,6 +237,5 @@ suspend fun ChannelContext.queueDelete(block: suspend QueueDeleteBuilder.() -> U
  * @since 1.2.3
  */
 @RabbitDslMarker
-suspend fun ChannelContext.queueUnbind(block: suspend QueueUnbindBuilder.() -> Unit) = runCatching {
+suspend fun ChannelContext.queueUnbind(block: suspend QueueUnbindBuilder.() -> Unit) =
     QueueUnbindBuilder(channel).apply { this.block() }.build()
-}
