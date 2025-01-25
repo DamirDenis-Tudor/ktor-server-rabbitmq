@@ -7,16 +7,14 @@
 ![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
 
 ### Overview
-
-- `Plugin` that provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
+- This plugin provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
 
 ### Features
 
 - Integrated with coroutines and has a separate dispatcher.
-- Seamlessly integrates with the Kotlin DSL, making it readable, maintainable, and easy to use.
 - Includes a built-in connection/channel management system.
-- Provides a built-in mechanism for validating property combinations.
 - Gives the possibility to interact directly with the java library.
+- Seamlessly integrates with the Kotlin DSL, making it readable, maintainable, and easy to use.
 
 ---
 
@@ -26,31 +24,26 @@
 2. [Queue Binding Example](#queue-binding-example)
 3. [Producer Example](#producer-example)
 4. [Consumer Example](#consumer-example)
-5. [Advanced Consumer Example](#advanced-consumer-example)
+5. [Advanced Consumer Example](#consumer-example-with-coroutinepollsize)
 6. [Library Calls Example](#library-calls-example)
 7. [Dead Letter Queue Example](#dead-letter-queue-example)
 8. [Logging](#logging)
 
-### Installation
+## Usage
 
+### Installation
 ```kotlin
-install(KabbitMQ) {
+install(RabbitMQ) {
     uri = "amqp://<user>:<password>@<address>:<port>"
     defaultConnectionName = "<default_connection>"
     connectionAttempts = 20
     attemptDelay = 10
-    dispatcherThreadPollSize = 2
-
-    tlsEnabled = true
-    tlsKeystorePath = "<path>"
-    tlsKeystorePassword = "<password>"
-    tlsTruststorePath = "<path>"
-    tlsTruststorePassword = "<password>"
+    dispatcherThreadPollSize = 4
+    tlsEnabled = false
 }
 ```
 
-### Queue Binding Example
-
+### Queue binding example
 ```kotlin
 rabbitmq {
     queueBind {
@@ -69,8 +62,7 @@ rabbitmq {
 }
 ```
 
-### Producer Example
-
+### Producer example
 ```kotlin
 rabbitmq {
     repeat(10) {
@@ -84,7 +76,6 @@ rabbitmq {
 ```
 
 ### Consumer Example
-
 ```kotlin
 rabbitmq {
     basicConsume {
@@ -97,18 +88,8 @@ rabbitmq {
 }
 ```
 
-# Advanced Consumer Example
+### Consumer Example with coroutinePollSize
 ```kotlin
-rabbitmq {
-    repeat(1_000_000) {
-        basicPublish {
-            exchange = "demo-exchange"
-            routingKey = "demo-routing-key"
-            message { "Hello World!" }
-        }
-    }
-}
-
 rabbitmq {
     connection(id = "consume") {
         basicConsume {
@@ -123,33 +104,12 @@ rabbitmq {
         }
     }
 }
-
-or
-
-rabbitmq {
-    connection(id = "consume") {
-        repeat(5) {
-            basicConsume {
-                autoAck = true
-                queue = "demo-queue"
-                dispacher = Dispacher.IO
-                deliverCallback<String> { tag, message ->
-                    launch {
-                        logger.info("Received message: $message")
-                        delay(30)
-                    }
-                }
-            }
-        }
-    }
-}
 ```
 
 ### Library Calls Example
-
 ```kotlin
 rabbitmq {
-    libChannel(id = 1) {
+    libChannel(id = 2) {
         basicPublish("demo-queue", "demo-routing-key", null, "Hello!".toByteArray())
 
         val consumer = object : DefaultConsumer(channel) {
@@ -162,7 +122,31 @@ rabbitmq {
 
             }
         }
+
         basicConsume("demo-queue", true, consumer)
+    }
+}
+```
+
+```kotlin
+rabbitmq {
+    libConnection(id = "lib-connection") {
+        val channel = createChannel()
+
+        channel.basicPublish("demo-queue", "demo-routing-key", null, "Hello!".toByteArray())
+
+        val consumer = object : DefaultConsumer(channel) {
+            override fun handleDelivery(
+                consumerTag: String?,
+                envelope: Envelope?,
+                properties: AMQP.BasicProperties?,
+                body: ByteArray?
+            ) {
+
+            }
+        }
+
+        channel.basicConsume("demo-queue", true, consumer)
     }
 }
 ```
@@ -252,6 +236,5 @@ fun Application.module() {
 - In order to set a logging level to this library add this line in `logback.xml` file:
 
 ```xml
-
-<logger name="io.github.damir.denis.tudor.ktor.server.rabbitmq" level="<level>"/>
+<logger name="io.github.damir.denis.tudor.ktor.server.rabbitmq" level="DEBUG"/>
 ```
