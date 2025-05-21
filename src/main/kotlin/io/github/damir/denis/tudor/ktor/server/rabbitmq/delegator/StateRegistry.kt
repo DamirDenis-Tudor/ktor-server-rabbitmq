@@ -93,8 +93,7 @@ object StateRegistry {
 
         currentRef::class.memberProperties.map {
             val state = states.get()[currentRef.javaClass.name to it.name]
-            val initialized = (state is State.Initialized)
-            val value = if (initialized) state.value else "Uninitialized"
+            val value = if ((state is State.Initialized)) state.value else "Uninitialized"
             logger.get().error("<{}> <{}>, value: <{}>", ref.get()?.javaClass?.simpleName, it.name, value)
         }
     }
