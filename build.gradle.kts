@@ -76,7 +76,9 @@ tasks {
     }
 }
 
-
+tasks.jar{
+    exclude("logback.xml")
+}
 
 tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
