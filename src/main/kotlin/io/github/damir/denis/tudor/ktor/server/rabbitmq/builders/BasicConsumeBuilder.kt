@@ -9,6 +9,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
+import io.ktor.util.logging.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,8 @@ class BasicConsumeBuilder(
     val connectionManager: ConnectionManager,
     private val channel: Channel,
 ) {
+    val defaultLogger = KtorSimpleLogger(this.javaClass.name)
+
     var noLocal: Boolean by Delegator()
     var exclusive: Boolean by Delegator()
     var arguments: Map<String, Any> by Delegator()
@@ -40,7 +43,15 @@ class BasicConsumeBuilder(
     var coroutinePollSize: Int = 1
 
     @InternalAPI
-    var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<Long, String>>(
+    var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<Long, ByteArray>>(
+        connectionManager.configuration.consumerChannelCoroutineSize
+    )
+
+    @InternalAPI
+    var failureCallbackDefined = false
+
+    @InternalAPI
+    var receiverFailChannel = kotlinx.coroutines.channels.Channel<Pair<Long, ByteArray>>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
 
@@ -50,7 +61,7 @@ class BasicConsumeBuilder(
         arguments = emptyMap()
         deliverCallback = DeliverCallback { _, delivery ->
             receiverChannel.trySendBlocking(
-                delivery.envelope.deliveryTag to delivery.body.toString(Charsets.UTF_8)
+                delivery.envelope.deliveryTag to delivery.body
             )
         }
         cancelCallback = CancelCallback { }
@@ -61,9 +72,33 @@ class BasicConsumeBuilder(
     inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
         repeat(coroutinePollSize) {
             connectionManager.coroutineScope.launch(dispatcher) {
-                receiverChannel.consumeAsFlow().collect { (deliveryTag, message) ->
-                    callback(deliveryTag, Json.decodeFromString<T>(message))
+                receiverChannel.consumeAsFlow().collect { (deliveryTag, messageBytes) ->
+                    runCatching {
+                        val message: T = when (T::class) {
+                            String::class -> String(messageBytes) as T
+                            ByteArray::class -> messageBytes as T
+
+                            else -> Json.decodeFromString<T>(String(messageBytes))
+                        }
+
+                        callback(deliveryTag, message)
+                    }.onFailure { error ->
+                        defaultLogger.error(error)
+                        if (failureCallbackDefined){
+                            receiverFailChannel.trySendBlocking(deliveryTag to messageBytes)
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    @RabbitDslMarker
+    fun deliverFailureCallback(callback: suspend (tag: Long, message: ByteArray) -> Unit) {
+        failureCallbackDefined = true
+        connectionManager.coroutineScope.launch(dispatcher) {
+            receiverFailChannel.consumeAsFlow().collect { (deliveryTag, messageBytes) ->
+                callback(deliveryTag, messageBytes)
             }
         }
     }
