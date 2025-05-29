@@ -70,7 +70,6 @@ class BasicConsumeBuilder(
     @RabbitDslMarker
     @Deprecated(
         message = "Use deliverCallback with Message<T> parameter for full access to properties and envelope.",
-        replaceWith = ReplaceWith("deliverCallback { message: Message<T> ->"),
         level = DeprecationLevel.WARNING
     )
     inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
@@ -131,7 +130,6 @@ class BasicConsumeBuilder(
     @RabbitDslMarker
     @Deprecated(
         message = "Use deliverFailureCallback with Message<ByteArray> parameter for full access to properties and envelope.",
-        replaceWith = ReplaceWith("deliverFailureCallback { message: Message<ByteArray> -> ..* }"),
         level = DeprecationLevel.WARNING
     )
     fun deliverFailureCallback(callback: suspend (tag: Long, message: ByteArray) -> Unit) {

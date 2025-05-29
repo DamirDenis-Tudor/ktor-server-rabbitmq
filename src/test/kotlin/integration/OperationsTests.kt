@@ -128,6 +128,8 @@ class OperationsTests {
                     }
                 }
 
+                sleep(2_000)
+
                 assertEquals(messageCount { queue = "test-queue" }, 10)
 
                 basicConsume {
