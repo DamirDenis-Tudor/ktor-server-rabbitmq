@@ -26,9 +26,10 @@
 4. [Consumer Example](#consumer-example)
 5. [Advanced Consumer Example](#consumer-example-with-coroutinepollsize)
 6. [Library Calls Example](#library-calls-example)
-7. [Serialization Fallback Example](#serialization-fallback-example)
-8. [Dead Letter Queue Example](#dead-letter-queue-example)
-9. [Logging](#logging)
+7. [Custom Coroutine Scope Example](#custom-coroutine-scope-example)
+8. [Serialization Fallback Example](#serialization-fallback-example)
+9. [Dead Letter Queue Example](#dead-letter-queue-example)
+10. [Logging](#logging)
 
 ## Usage
 
@@ -107,6 +108,24 @@ rabbitmq {
 }
 ```
 
+### Consumer Example with coroutinePollSize
+```kotlin
+rabbitmq {
+    connection(id = "consume") {
+        basicConsume {
+            autoAck = true
+            queue = "demo-queue"
+            dispacher = Dispacher.IO
+            coroutinePollSize = 1_000
+            deliverCallback<String> { message ->
+                logger.info("Received message: $message")
+                delay(30)
+            }
+        }
+    }
+}
+```
+
 ### Library Calls Example
 ```kotlin
 rabbitmq {
@@ -150,6 +169,40 @@ rabbitmq {
         channel.basicConsume("demo-queue", true, consumer)
     }
 }
+```
+### Custom Coroutine Scope Example
+```kotlin
+val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    println("ExceptionHandler got $throwable")
+}
+
+val rabbitMQScope = CoroutineScope(SupervisorJob() + exceptionHandler)
+
+// ...
+
+install(RabbitMQ) {
+    connectionAttempts = 3
+    attemptDelay = 10
+    uri = rabbitMQContainer.amqpUrl
+    scope = rabbitMQScope
+}
+
+// ...
+
+rabbitmq {
+    connection(id = "consume") {
+        basicConsume {
+            autoAck = true
+            queue = "demo-queue"
+            dispacher = Dispacher.IO
+            coroutinePollSize = 1_000
+            deliverCallback<String> { message ->
+                throw Exception("business logic exception")
+            }
+        }
+    }
+}
+
 ```
 
 ### Serialization Fallback Example

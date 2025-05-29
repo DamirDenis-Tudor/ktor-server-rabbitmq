@@ -1,6 +1,7 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.connection
 
 import io.ktor.server.config.*
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Configuration class for RabbitMQ settings.
@@ -24,6 +25,8 @@ class ConnectionConfig(config: ApplicationConfig) {
     var tlsKeystorePassword: String = config.tryGetString("tls.keystorePassword") ?: ""
     var tlsTruststorePath: String = config.tryGetString("tls.truststorePath") ?: ""
     var tlsTruststorePassword: String = config.tryGetString("tls.truststorePassword") ?: ""
+
+    var scope: CoroutineScope? = null
 
     fun verify(){
         require(connectionAttempts > 0) { "connectionAttempts must be > 0" }

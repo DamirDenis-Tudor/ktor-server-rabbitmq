@@ -48,7 +48,7 @@ open class ConnectionManager(
         get() = convertedDispatcher
 
     val coroutineScope
-        get() = scope
+        get() = config.scope ?: scope
 
     val configuration
         get() = config

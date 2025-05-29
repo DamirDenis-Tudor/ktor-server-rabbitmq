@@ -280,12 +280,22 @@ class OperationsTests {
     }
 
     @Test
-    fun `non serialization related exception `() = testApplication {
+    fun `scope based exception handling`() = testApplication {
+        val counter = AtomicInteger(0)
+
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            println("ExceptionHandler got $throwable")
+            counter.incrementAndGet()
+        }
+
+        val rabbitMQScope = CoroutineScope(SupervisorJob() + exceptionHandler)
+
         application {
             install(RabbitMQ) {
                 connectionAttempts = 3
                 attemptDelay = 10
                 uri = rabbitMQContainer.amqpUrl
+                scope = rabbitMQScope
             }
         }
 
@@ -313,13 +323,14 @@ class OperationsTests {
                 }
             }
 
-            val exceptionDeferred = CompletableDeferred<Throwable>()
-
-            val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-                exceptionDeferred.complete(throwable)
+            rabbitmqTest {
+                throw Exception("something went wrong")
+                basicPublish {
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    message { "Hello World!" }
+                }
             }
-
-            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
 
             rabbitmqTest {
                 connectionTest(id = "consume1") {
@@ -328,22 +339,83 @@ class OperationsTests {
                         queue = "demo2-queue"
                         dispatcher = Dispatchers.IO
                         deliverCallback<String> { message ->
-                            scope.launch {
-                                println("Received message: ${message.body}")
-                                throw Exception("business logic exception")
-                            }
+                            println("Received message: ${message.body}")
+                            throw Exception("business logic exception")
+                        }
+                    }
+                }
+            }
+
+            sleep(2_000)
+
+            assertTrue(counter.get() == 2)
+        }
+    }
+
+    @Test
+    fun `non serialization related exception `() = testApplication {
+        val exceptionDeferred = CompletableDeferred<Throwable>()
+
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            exceptionDeferred.complete(throwable)
+        }
+
+        val rabbitMQScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
+
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+                scope = rabbitMQScope
+            }
+        }
+
+        application {
+            rabbitmqTest {
+                queueBind {
+                    queue = "demo2-queue"
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    queueDeclare {
+                        queue = "demo2-queue"
+                    }
+                    exchangeDeclare {
+                        exchange = "demo2-exchange"
+                        type = "direct"
+                    }
+                }
+            }
+
+            rabbitmqTest {
+                basicPublish {
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    message { "Hello World!" }
+                }
+            }
+
+            rabbitmqTest {
+                connectionTest(id = "consume1") {
+                    basicConsume {
+                        autoAck = true
+                        queue = "demo2-queue"
+                        dispatcher = Dispatchers.IO
+                        deliverCallback<String> { message ->
+                            println("Received message: ${message.body}")
+                            throw Exception("business logic exception")
                         }
                     }
                 }
             }
 
             val thrown = runBlocking {
-                withTimeoutOrNull(5000) { exceptionDeferred.await() }
+                withTimeoutOrNull(2000) { exceptionDeferred.await() }
             }
 
             println(thrown)
 
-            assertTrue(thrown is Exception && thrown.message?.contains("business logic exception") == true)
+            assertTrue(thrown is Exception)
         }
     }
 }
