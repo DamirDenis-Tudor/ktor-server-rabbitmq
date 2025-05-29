@@ -5,13 +5,13 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
 import io.ktor.server.application.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
 import rabbitmqTest
@@ -276,6 +276,74 @@ class OperationsTests {
                 log.info(counter.toString())
                 assert(counter.get() == 100)
             }
+        }
+    }
+
+    @Test
+    fun `non serialization related exception `() = testApplication {
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+            }
+        }
+
+        application {
+            rabbitmqTest {
+                queueBind {
+                    queue = "demo2-queue"
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    queueDeclare {
+                        queue = "demo2-queue"
+                    }
+                    exchangeDeclare {
+                        exchange = "demo2-exchange"
+                        type = "direct"
+                    }
+                }
+            }
+
+            rabbitmqTest {
+                basicPublish {
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    message { "Hello World!" }
+                }
+            }
+
+            val exceptionDeferred = CompletableDeferred<Throwable>()
+
+            val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+                exceptionDeferred.complete(throwable)
+            }
+
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
+
+            rabbitmqTest {
+                connectionTest(id = "consume1") {
+                    basicConsume {
+                        autoAck = true
+                        queue = "demo2-queue"
+                        dispatcher = Dispatchers.IO
+                        deliverCallback<String> { message ->
+                            scope.launch {
+                                println("Received message: ${message.body}")
+                                throw Exception("business logic exception")
+                            }
+                        }
+                    }
+                }
+            }
+
+            val thrown = runBlocking {
+                withTimeoutOrNull(5000) { exceptionDeferred.await() }
+            }
+
+            println(thrown)
+
+            assertTrue(thrown is Exception && thrown.message?.contains("business logic exception") == true)
         }
     }
 }

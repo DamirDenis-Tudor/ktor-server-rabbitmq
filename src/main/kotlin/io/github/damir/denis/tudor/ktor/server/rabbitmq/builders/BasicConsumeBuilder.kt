@@ -77,19 +77,19 @@ class BasicConsumeBuilder(
             connectionManager.coroutineScope.launch(dispatcher) {
                 receiverChannel.consumeAsFlow().collect { delivery ->
                     runCatching {
-                        val message: T = when (T::class) {
+                        when (T::class) {
                             String::class -> String(delivery.body) as T
                             ByteArray::class -> delivery.body as T
 
                             else -> Json.decodeFromString<T>(String(delivery.body))
                         }
-
-                        callback(delivery.envelope.deliveryTag, message)
                     }.onFailure { error ->
                         defaultLogger.error(error)
                         if (failureCallbackDefined){
                             receiverFailChannel.trySendBlocking(delivery)
                         }
+                    }.getOrNull()?.let { message ->
+                        callback(delivery.envelope.deliveryTag, message)
                     }
                 }
             }
@@ -102,13 +102,18 @@ class BasicConsumeBuilder(
             connectionManager.coroutineScope.launch(dispatcher) {
                 receiverChannel.consumeAsFlow().collect { delivery ->
                     runCatching {
-                        val message: T = when (T::class) {
+                         when (T::class) {
                             String::class -> String(delivery.body) as T
                             ByteArray::class -> delivery.body as T
 
                             else -> Json.decodeFromString<T>(String(delivery.body))
                         }
-
+                    }.onFailure { error ->
+                        defaultLogger.error(error)
+                        if (failureCallbackDefined){
+                            receiverFailChannel.trySendBlocking(delivery)
+                        }
+                    }.getOrNull()?.let { message ->
                         callback(
                             Message(
                                 body = message,
@@ -116,11 +121,6 @@ class BasicConsumeBuilder(
                                 properties = delivery.properties
                             )
                         )
-                    }.onFailure { error ->
-                        defaultLogger.error(error)
-                        if (failureCallbackDefined){
-                            receiverFailChannel.trySendBlocking(delivery)
-                        }
                     }
                 }
             }
