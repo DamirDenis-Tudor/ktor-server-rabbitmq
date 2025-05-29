@@ -95,10 +95,10 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<String> { tag, message ->
+                    deliverCallback<String> { message ->
                         delay(3)
                         counter1.incrementAndGet()
-                        log.info("Consume1 : $message")
+                        log.info("Consume1 : ${message.body}")
                     }
                 }
             }
@@ -162,10 +162,10 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<ByteArray> { tag, message ->
+                    deliverCallback<ByteArray> { message ->
                         delay(3)
                         counter1.incrementAndGet()
-                        log.info("Consume1 : ${message.contentToString()}")
+                        log.info("Consume1 : ${message.body.contentToString()}")
                     }
                 }
             }
@@ -229,7 +229,7 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<Message> { tag, message ->
+                    deliverCallback<Message> { message ->
                         delay(3)
                         counter1.incrementAndGet()
                         log.info("Consume1 : $message")
@@ -311,13 +311,13 @@ class SerializationTests {
                     autoAck = false
                     queue = "test-queue12"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<Message> { _, _ ->
+                    deliverCallback<Message> { _ ->
                         delay(3)
                         counter1.incrementAndGet()
                     }
-                    deliverFailureCallback { tag, _ ->
+                    deliverFailureCallback { message ->
                         basicReject {
-                            deliveryTag = tag
+                            deliveryTag = message.envelope.deliveryTag
                             requeue = false
                         }
                     }
