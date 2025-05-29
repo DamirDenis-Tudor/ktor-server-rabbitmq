@@ -128,14 +128,16 @@ class OperationsTests {
                     }
                 }
 
+                sleep(2_000)
+
                 assertEquals(messageCount { queue = "test-queue" }, 10)
 
                 basicConsume {
                     queue = "test-queue"
                     autoAck = false
-                    deliverCallback<Message> { tag, message ->
+                    deliverCallback<Message> { message ->
                         basicReject {
-                            deliveryTag = tag
+                            deliveryTag = message.envelope.deliveryTag
                             requeue = false
                         }
                     }
@@ -148,8 +150,8 @@ class OperationsTests {
                 basicConsume {
                     queue = "dlq"
                     autoAck = true
-                    deliverCallback<Message> { tag, message ->
-                        println("Received message: $message")
+                    deliverCallback<Message> { message ->
+                        println("Received message: ${message.body}")
                     }
                 }
 
@@ -204,7 +206,7 @@ class OperationsTests {
                         queue = "demo-queue"
                         dispatcher = Dispatchers.IO
                         coroutinePollSize = 100
-                        deliverCallback<String> { tag, message ->
+                        deliverCallback<String> { message ->
                             delay(30)
                             withContext(Dispatchers.IO.limitedParallelism(1)) {
                                 counter.incrementAndGet()
@@ -263,7 +265,7 @@ class OperationsTests {
                         autoAck = true
                         queue = "demo1-queue"
                         dispatcher = Dispatchers.IO
-                        deliverCallback<String> { tag, message ->
+                        deliverCallback<String> { message ->
                             delay(3)
                             counter.incrementAndGet()
                         }

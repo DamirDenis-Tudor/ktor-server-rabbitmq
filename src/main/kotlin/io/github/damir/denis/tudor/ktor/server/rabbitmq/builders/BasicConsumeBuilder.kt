@@ -8,6 +8,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Message
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.rabbitMQ
 import io.ktor.util.logging.*
 import io.ktor.utils.io.*
@@ -43,7 +44,7 @@ class BasicConsumeBuilder(
     var coroutinePollSize: Int = 1
 
     @InternalAPI
-    var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<Long, ByteArray>>(
+    var receiverChannel = kotlinx.coroutines.channels.Channel<Delivery>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
 
@@ -51,7 +52,7 @@ class BasicConsumeBuilder(
     var failureCallbackDefined = false
 
     @InternalAPI
-    var receiverFailChannel = kotlinx.coroutines.channels.Channel<Pair<Long, ByteArray>>(
+    var receiverFailChannel = kotlinx.coroutines.channels.Channel<Delivery>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
 
@@ -60,32 +61,34 @@ class BasicConsumeBuilder(
         exclusive = false
         arguments = emptyMap()
         deliverCallback = DeliverCallback { _, delivery ->
-            receiverChannel.trySendBlocking(
-                delivery.envelope.deliveryTag to delivery.body
-            )
+            receiverChannel.trySendBlocking(delivery)
         }
         cancelCallback = CancelCallback { }
         shutdownSignalCallback = ConsumerShutdownSignalCallback { _, error -> }
     }
 
     @RabbitDslMarker
+    @Deprecated(
+        message = "Use deliverCallback with Message<T> parameter for full access to properties and envelope.",
+        level = DeprecationLevel.WARNING
+    )
     inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
         repeat(coroutinePollSize) {
             connectionManager.coroutineScope.launch(dispatcher) {
-                receiverChannel.consumeAsFlow().collect { (deliveryTag, messageBytes) ->
+                receiverChannel.consumeAsFlow().collect { delivery ->
                     runCatching {
                         val message: T = when (T::class) {
-                            String::class -> String(messageBytes) as T
-                            ByteArray::class -> messageBytes as T
+                            String::class -> String(delivery.body) as T
+                            ByteArray::class -> delivery.body as T
 
-                            else -> Json.decodeFromString<T>(String(messageBytes))
+                            else -> Json.decodeFromString<T>(String(delivery.body))
                         }
 
-                        callback(deliveryTag, message)
+                        callback(delivery.envelope.deliveryTag, message)
                     }.onFailure { error ->
                         defaultLogger.error(error)
                         if (failureCallbackDefined){
-                            receiverFailChannel.trySendBlocking(deliveryTag to messageBytes)
+                            receiverFailChannel.trySendBlocking(delivery)
                         }
                     }
                 }
@@ -94,11 +97,62 @@ class BasicConsumeBuilder(
     }
 
     @RabbitDslMarker
+    inline fun <reified T> deliverCallback(crossinline callback: suspend (message: Message<T>) -> Unit) {
+        repeat(coroutinePollSize) {
+            connectionManager.coroutineScope.launch(dispatcher) {
+                receiverChannel.consumeAsFlow().collect { delivery ->
+                    runCatching {
+                        val message: T = when (T::class) {
+                            String::class -> String(delivery.body) as T
+                            ByteArray::class -> delivery.body as T
+
+                            else -> Json.decodeFromString<T>(String(delivery.body))
+                        }
+
+                        callback(
+                            Message(
+                                body = message,
+                                envelope = delivery.envelope,
+                                properties = delivery.properties
+                            )
+                        )
+                    }.onFailure { error ->
+                        defaultLogger.error(error)
+                        if (failureCallbackDefined){
+                            receiverFailChannel.trySendBlocking(delivery)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @RabbitDslMarker
+    @Deprecated(
+        message = "Use deliverFailureCallback with Message<ByteArray> parameter for full access to properties and envelope.",
+        level = DeprecationLevel.WARNING
+    )
     fun deliverFailureCallback(callback: suspend (tag: Long, message: ByteArray) -> Unit) {
         failureCallbackDefined = true
         connectionManager.coroutineScope.launch(dispatcher) {
-            receiverFailChannel.consumeAsFlow().collect { (deliveryTag, messageBytes) ->
-                callback(deliveryTag, messageBytes)
+            receiverFailChannel.consumeAsFlow().collect { delivery ->
+                callback(delivery.envelope.deliveryTag, delivery.body)
+            }
+        }
+    }
+
+    @RabbitDslMarker
+    fun deliverFailureCallback(callback: suspend (message: Message<ByteArray>) -> Unit) {
+        failureCallbackDefined = true
+        connectionManager.coroutineScope.launch(dispatcher) {
+            receiverFailChannel.consumeAsFlow().collect { delivery ->
+                callback(
+                    Message(
+                        body = delivery.body,
+                        envelope = delivery.envelope,
+                        properties = delivery.properties
+                    )
+                )
             }
         }
     }

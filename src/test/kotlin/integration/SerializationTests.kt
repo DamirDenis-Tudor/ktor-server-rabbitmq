@@ -95,10 +95,10 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<String> { tag, message ->
+                    deliverCallback<String> { message ->
                         delay(3)
                         counter1.incrementAndGet()
-                        log.info("Consume1 : $message")
+                        log.info("Consume1 : ${message.body}")
                     }
                 }
             }
@@ -162,10 +162,10 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<ByteArray> { tag, message ->
+                    deliverCallback<ByteArray> { message ->
                         delay(3)
                         counter1.incrementAndGet()
-                        log.info("Consume1 : ${message.contentToString()}")
+                        log.info("Consume1 : ${message.body.contentToString()}")
                     }
                 }
             }
@@ -229,7 +229,7 @@ class SerializationTests {
                     autoAck = true
                     queue = "demo1-queue"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<Message> { tag, message ->
+                    deliverCallback<Message> { message ->
                         delay(3)
                         counter1.incrementAndGet()
                         log.info("Consume1 : $message")
@@ -311,13 +311,13 @@ class SerializationTests {
                     autoAck = false
                     queue = "test-queue12"
                     dispatcher = Dispatchers.IO
-                    deliverCallback<Message> { _, _ ->
+                    deliverCallback<Message> { _ ->
                         delay(3)
                         counter1.incrementAndGet()
                     }
-                    deliverFailureCallback { tag, _ ->
+                    deliverFailureCallback { message ->
                         basicReject {
-                            deliveryTag = tag
+                            deliveryTag = message.envelope.deliveryTag
                             requeue = false
                         }
                     }
@@ -331,6 +331,76 @@ class SerializationTests {
             rabbitmqTest {
                 assertEquals(messageCount { queue = "dlq1" }, 90)
             }
+        }
+    }
+
+    @Test
+    fun `consume using Message based serialization`() = testApplication {
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+                consumerChannelCoroutineSize = 100
+            }
+        }
+
+        application {
+            rabbitmqTest {
+                queueBind {
+                    queue = "demo1-queue"
+                    exchange = "demo1-exchange"
+                    routingKey = "demo1-routing-key"
+                    queueDeclare {
+                        queue = "demo1-queue"
+                    }
+                    exchangeDeclare {
+                        exchange = "demo1-exchange"
+                        type = "direct"
+                    }
+                }
+            }
+
+            rabbitmqTest {
+                repeat(10) {
+                    basicPublish {
+                        exchange = "demo1-exchange"
+                        routingKey = "demo1-routing-key"
+                        message { Message(content = "Hello World, 'Message'!") }
+                    }
+                }
+                repeat(90) {
+                    basicPublish {
+                        exchange = "demo1-exchange"
+                        routingKey = "demo1-routing-key"
+                        message { "Hello World, 'String'!" }
+                    }
+                }
+            }
+
+            val counter1 = AtomicInteger(0)
+
+            rabbitmqTest {
+                basicConsume {
+                    autoAck = true
+                    queue = "demo1-queue"
+                    dispatcher = Dispatchers.IO
+                    deliverCallback<Message> { message ->
+                        delay(3)
+                        counter1.incrementAndGet()
+                        log.info("Consume1 : ${message.body}")
+                    }
+                    deliverFailureCallback { message ->
+                        log.info("Consume1 : ${String(message.body)}")
+                    }
+                }
+            }
+
+            sleep(2_000)
+
+            log.info(counter1.toString())
+
+            assert(counter1.get() == 10)
         }
     }
 }
