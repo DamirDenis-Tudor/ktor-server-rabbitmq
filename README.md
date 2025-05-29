@@ -26,8 +26,9 @@
 4. [Consumer Example](#consumer-example)
 5. [Advanced Consumer Example](#consumer-example-with-coroutinepollsize)
 6. [Library Calls Example](#library-calls-example)
-7. [Dead Letter Queue Example](#dead-letter-queue-example)
-8. [Logging](#logging)
+7. [Serialization Fallback Example](#serialization-fallback-example)
+8. [Dead Letter Queue Example](#dead-letter-queue-example)
+9. [Logging](#logging)
 
 ## Usage
 
@@ -81,7 +82,7 @@ rabbitmq {
     basicConsume {
         autoAck = true
         queue = "demo-queue"
-        deliverCallback<String> { tag, message ->
+        deliverCallback<String> { message ->
             logger.info("Received message: $message")
         }
     }
@@ -97,7 +98,7 @@ rabbitmq {
             queue = "demo-queue"
             dispacher = Dispacher.IO
             coroutinePollSize = 1_000
-            deliverCallback<String> { tag, message ->
+            deliverCallback<String> { message ->
                 logger.info("Received message: $message")
                 delay(30)
             }
@@ -147,6 +148,70 @@ rabbitmq {
         }
 
         channel.basicConsume("demo-queue", true, consumer)
+    }
+}
+```
+
+### Serialization Fallback Example
+
+```kotlin 
+@Serializable
+data class Message(
+    var content: String
+)
+
+fun Application.module() {
+    install(RabbitMQ) {
+        uri = "amqp://guest:guest@localhost:5672"
+        dispatcherThreadPollSize = 3
+    }
+
+    rabbitmq {
+        queueBind {
+            queue = "test-queue"
+            exchange = "test-exchange"
+            queueDeclare {
+                queue = "test-queue"
+                arguments = mapOf(
+                    "x-dead-letter-exchange" to "dlx",
+                    "x-dead-letter-routing-key" to "dlq-dlx"
+                )
+            }
+            exchangeDeclare {
+                exchange = "test-exchange"
+                type = "fanout"
+            }
+        }
+    }
+
+    rabbitmq {
+        repeat(10) {
+            basicPublish {
+                exchange = "test-exchange"
+                message {
+                    Message(content = "Hello world!")
+                }
+            }
+        }
+        repeat(10) {
+            basicPublish {
+                exchange = "test-exchange"
+                message { "Hello world!" }
+            }
+        }
+    }
+
+    rabbitmq {
+        basicConsume {
+            queue = "test-queue"
+            autoAck = false
+            deliverCallback<Message> { message ->
+                println("Received as Message: ${message.body}")
+            }
+            deliverFailureCallback { message ->
+                println("Could not serialize, received as ByteArray: ${message.body}")
+            }
+        }
     }
 }
 ```
@@ -212,9 +277,9 @@ fun Application.module() {
         basicConsume {
             queue = "test-queue"
             autoAck = false
-            deliverCallback<Message> { tag, message ->
+            deliverCallback<Message> { message ->
                 basicReject {
-                    deliveryTag = tag
+                    deliveryTag = message.envelope.deliveryTag
                     requeue = false
                 }
             }
@@ -223,8 +288,8 @@ fun Application.module() {
         basicConsume {
             queue = "dlq"
             autoAck = true
-            deliverCallback<Message> { tag, message ->
-                println("Received message in dead letter queue: $message")
+            deliverCallback<Message> { message ->
+                println("Received message in dead letter queue: ${message.body}")
             }
         }
     }
