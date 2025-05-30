@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.testcontainers.containers.RabbitMQContainer
 import org.testcontainers.utility.DockerImageName
 import rabbitmqTest
@@ -416,6 +415,64 @@ class OperationsTests {
             println(thrown)
 
             assertTrue(thrown is Exception)
+        }
+    }
+
+    @Test
+    fun `basic properties builder example`() = testApplication {
+        application {
+            install(RabbitMQ) {
+                connectionAttempts = 3
+                attemptDelay = 10
+                uri = rabbitMQContainer.amqpUrl
+            }
+        }
+
+        application {
+            rabbitmqTest {
+                queueBind {
+                    queue = "demo2-queue"
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    queueDeclare {
+                        queue = "demo2-queue"
+                    }
+                    exchangeDeclare {
+                        exchange = "demo2-exchange"
+                        type = "direct"
+                    }
+                }
+            }
+
+            rabbitmqTest {
+                basicPublish {
+                    exchange = "demo2-exchange"
+                    routingKey = "demo2-routing-key"
+                    properties = basicProperties {
+                        headers = mapOf("test" to "test")
+                        correlationId = "test"
+                        type = "important"
+                    }.also { println(it) }
+                    message { "Hello World!" }
+                }
+            }
+
+            rabbitmqTest {
+                connectionTest(id = "consume1") {
+                    basicConsume {
+                        autoAck = true
+                        queue = "demo2-queue"
+                        dispatcher = Dispatchers.IO
+                        consumerTag = "test"
+                        deliverCallback<String> { message ->
+                            println("Received message: ${message}")
+                            assertEquals(message.properties.headers.size, 1)
+                            assertEquals(message.properties.correlationId, "test")
+                            assertEquals(message.properties.type, "important")
+                        }
+                    }
+                }
+            }
         }
     }
 }

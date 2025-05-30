@@ -122,6 +122,25 @@ suspend fun ChannelContext.basicPublish(block: suspend BasicPublishBuilder.() ->
     BasicPublishBuilder(channel).apply { this.block() }.build()
 
 /**
+ * Configures and builds the basic properties for a message using a builder pattern.
+ *
+ * This function allows customization of AMQP basic properties (e.g., headers, content type)
+ * by applying the provided [block] to a [BasicPropertiesBuilder].
+ *
+ * @param block A suspendable configuration block used to customize the [BasicPropertiesBuilder].
+ * @return The built AMQP basic properties instance.
+ *
+ * @see BasicPropertiesBuilder
+ * @see com.rabbitmq.client.AMQP.BasicProperties
+ *
+ * @author Damir Denis-Tudor
+ * @since 1.3.6
+ */
+@RabbitDslMarker
+suspend fun basicProperties(block: suspend BasicPropertiesBuilder.() -> Unit) =
+    BasicPropertiesBuilder().apply { this.block() }.build()
+
+/**
  * Configures the Quality of Service (QoS) settings for the channel using a builder.
  *
  * @param block A configuration block for setting up the QoS parameters.

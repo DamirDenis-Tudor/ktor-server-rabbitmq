@@ -58,9 +58,14 @@ object StateRegistry {
         return try {
             block()
         } finally {
-
             logger.set(defaultLogger)
-            states.set(states.get().filter { it.key.first != ref.get()?.javaClass?.name }.toMutableMap())
+
+            states.set(
+                states.get().filter {
+                    it.key.first != ref.get()?.javaClass?.name
+                }.toMutableMap()
+            )
+
             ref.remove()
         }
     }
@@ -74,8 +79,9 @@ object StateRegistry {
     fun verify(vararg properties: KProperty<*>): Boolean {
         ref.get()?.let { currentRef ->
             return properties.all {
-                states.get()
-                    .getOrPut(currentRef.javaClass.name to it.name) { State.Uninitialized } !is State.Uninitialized
+                states.get().getOrPut(currentRef.javaClass.name to it.name) {
+                    State.Uninitialized
+                } !is State.Uninitialized
             }
         } ?: error("No reference set for the current thread.")
     }

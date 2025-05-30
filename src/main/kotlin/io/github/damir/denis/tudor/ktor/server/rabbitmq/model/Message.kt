@@ -5,6 +5,7 @@ import com.rabbitmq.client.Envelope
 
 data class Message<T>(
     val body: T,
+    val envelope: Envelope,
+    val consumerTag: String,
     val properties: AMQP.BasicProperties,
-    val envelope: Envelope
 )

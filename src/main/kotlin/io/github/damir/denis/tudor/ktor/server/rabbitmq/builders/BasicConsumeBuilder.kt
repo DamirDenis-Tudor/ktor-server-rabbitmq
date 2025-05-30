@@ -44,7 +44,7 @@ class BasicConsumeBuilder(
     var coroutinePollSize: Int = 1
 
     @InternalAPI
-    var receiverChannel = kotlinx.coroutines.channels.Channel<Delivery>(
+    var receiverChannel = kotlinx.coroutines.channels.Channel<Pair<String, Delivery>>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
 
@@ -52,7 +52,7 @@ class BasicConsumeBuilder(
     var failureCallbackDefined = false
 
     @InternalAPI
-    var receiverFailChannel = kotlinx.coroutines.channels.Channel<Delivery>(
+    var receiverFailChannel = kotlinx.coroutines.channels.Channel<Pair<String, Delivery>>(
         connectionManager.configuration.consumerChannelCoroutineSize
     )
 
@@ -60,8 +60,8 @@ class BasicConsumeBuilder(
         noLocal = false
         exclusive = false
         arguments = emptyMap()
-        deliverCallback = DeliverCallback { _, delivery ->
-            receiverChannel.trySendBlocking(delivery)
+        deliverCallback = DeliverCallback { consumerTag, delivery ->
+            receiverChannel.trySendBlocking(consumerTag to delivery)
         }
         cancelCallback = CancelCallback { }
         shutdownSignalCallback = ConsumerShutdownSignalCallback { _, error -> }
@@ -75,7 +75,7 @@ class BasicConsumeBuilder(
     inline fun <reified T> deliverCallback(crossinline callback: suspend (tag: Long, message: T) -> Unit) {
         repeat(coroutinePollSize) {
             connectionManager.coroutineScope.launch(dispatcher) {
-                receiverChannel.consumeAsFlow().collect { delivery ->
+                receiverChannel.consumeAsFlow().collect { (consumerTag, delivery) ->
                     runCatching {
                         when (T::class) {
                             String::class -> String(delivery.body) as T
@@ -86,7 +86,7 @@ class BasicConsumeBuilder(
                     }.onFailure { error ->
                         defaultLogger.error(error)
                         if (failureCallbackDefined){
-                            receiverFailChannel.trySendBlocking(delivery)
+                            receiverFailChannel.trySendBlocking(consumerTag to delivery)
                         }
                     }.getOrNull()?.let { message ->
                         callback(delivery.envelope.deliveryTag, message)
@@ -100,7 +100,7 @@ class BasicConsumeBuilder(
     inline fun <reified T> deliverCallback(crossinline callback: suspend (message: Message<T>) -> Unit) {
         repeat(coroutinePollSize) {
             connectionManager.coroutineScope.launch(dispatcher) {
-                receiverChannel.consumeAsFlow().collect { delivery ->
+                receiverChannel.consumeAsFlow().collect { (consumerTag, delivery) ->
                     runCatching {
                          when (T::class) {
                             String::class -> String(delivery.body) as T
@@ -111,12 +111,13 @@ class BasicConsumeBuilder(
                     }.onFailure { error ->
                         defaultLogger.error(error)
                         if (failureCallbackDefined){
-                            receiverFailChannel.trySendBlocking(delivery)
+                            receiverFailChannel.trySendBlocking(consumerTag to delivery)
                         }
                     }.getOrNull()?.let { message ->
                         callback(
                             Message(
                                 body = message,
+                                consumerTag = consumerTag,
                                 envelope = delivery.envelope,
                                 properties = delivery.properties
                             )
@@ -135,7 +136,7 @@ class BasicConsumeBuilder(
     fun deliverFailureCallback(callback: suspend (tag: Long, message: ByteArray) -> Unit) {
         failureCallbackDefined = true
         connectionManager.coroutineScope.launch(dispatcher) {
-            receiverFailChannel.consumeAsFlow().collect { delivery ->
+            receiverFailChannel.consumeAsFlow().collect { (_, delivery) ->
                 callback(delivery.envelope.deliveryTag, delivery.body)
             }
         }
@@ -145,10 +146,11 @@ class BasicConsumeBuilder(
     fun deliverFailureCallback(callback: suspend (message: Message<ByteArray>) -> Unit) {
         failureCallbackDefined = true
         connectionManager.coroutineScope.launch(dispatcher) {
-            receiverFailChannel.consumeAsFlow().collect { delivery ->
+            receiverFailChannel.consumeAsFlow().collect { (consumerTag, delivery) ->
                 callback(
                     Message(
                         body = delivery.body,
+                        consumerTag = consumerTag,
                         envelope = delivery.envelope,
                         properties = delivery.properties
                     )
