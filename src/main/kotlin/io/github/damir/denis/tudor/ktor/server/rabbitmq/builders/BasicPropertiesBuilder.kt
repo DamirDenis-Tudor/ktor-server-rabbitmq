@@ -29,23 +29,20 @@ class BasicPropertiesBuilder {
 
     fun build(): AMQP.BasicProperties {
         delegatorScope(on = this@BasicPropertiesBuilder) {
-            when {
-                verify(::contentType) -> builder.contentType(contentType)
-                verify(::contentEncoding) -> builder.contentEncoding(contentEncoding)
-                verify(::headers) -> builder.headers(headers)
-                verify(::deliveryMode) -> builder.deliveryMode(deliveryMode)
-                verify(::priority) -> builder.priority(priority)
-                verify(::correlationId) -> builder.correlationId(correlationId)
-                verify(::replyTo) -> builder.replyTo(replyTo)
-                verify(::expiration) -> builder.expiration(expiration)
-                verify(::messageId) -> builder.messageId(messageId)
-                verify(::timestamp) -> builder.timestamp(timestamp)
-                verify(::type) -> builder.type(type)
-                verify(::userId) -> builder.userId(userId)
-                verify(::appId) -> builder.appId(appId)
-                verify(::clusterId) -> builder.clusterId(clusterId)
-                else -> {}
-            }
+            if (verify(::contentType)) builder.contentType(contentType)
+            if (verify(::contentEncoding)) builder.contentEncoding(contentEncoding)
+            if (verify(::headers)) builder.headers(headers)
+            if (verify(::deliveryMode)) builder.deliveryMode(deliveryMode)
+            if (verify(::priority)) builder.priority(priority)
+            if (verify(::correlationId)) builder.correlationId(correlationId)
+            if (verify(::replyTo)) builder.replyTo(replyTo)
+            if (verify(::expiration)) builder.expiration(expiration)
+            if (verify(::messageId)) builder.messageId(messageId)
+            if (verify(::timestamp)) builder.timestamp(timestamp)
+            if (verify(::type)) builder.type(type)
+            if (verify(::userId)) builder.userId(userId)
+            if (verify(::appId)) builder.appId(appId)
+            if (verify(::clusterId)) builder.clusterId(clusterId)
         }
 
         return builder.build()

@@ -451,6 +451,7 @@ class OperationsTests {
                     properties = basicProperties {
                         headers = mapOf("test" to "test")
                         correlationId = "test"
+                        type = "important"
                     }.also { println(it) }
                     message { "Hello World!" }
                 }
@@ -462,9 +463,12 @@ class OperationsTests {
                         autoAck = true
                         queue = "demo2-queue"
                         dispatcher = Dispatchers.IO
+                        consumerTag = "test"
                         deliverCallback<String> { message ->
                             println("Received message: ${message}")
                             assertEquals(message.properties.headers.size, 1)
+                            assertEquals(message.properties.correlationId, "test")
+                            assertEquals(message.properties.type, "important")
                         }
                     }
                 }
