@@ -11,7 +11,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Channel
 class ConsumerCountBuilder(private val channel: Channel) {
     var queue: String by Delegator()
 
-    fun build(): Long = delegatorScope(on = this@ConsumerCountBuilder) {
+    suspend fun build(): Long = delegatorScope(on = this@ConsumerCountBuilder) {
         return@delegatorScope when {
             verify(::queue) -> {
                 channel.consumerCount(queue)

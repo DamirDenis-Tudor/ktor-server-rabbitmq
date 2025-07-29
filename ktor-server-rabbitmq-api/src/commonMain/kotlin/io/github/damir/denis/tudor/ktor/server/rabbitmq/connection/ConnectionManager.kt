@@ -11,13 +11,17 @@ abstract class ConnectionManager {
     abstract val coroutineScope: CoroutineScope
     abstract val configuration: ConnectionConfig
 
-    abstract fun getConnection(id: String = configuration.defaultConnectionName): Connection
     abstract fun getConnectionId(connection: Connection): String
-    abstract fun closeConnection(connectionId: String)
+    abstract suspend fun getConnection(id: String = configuration.defaultConnectionName): Connection
+    abstract suspend fun closeConnection(connectionId: String)
 
-    abstract fun getChannel(channelId: Int = 1, connectionId: String = configuration.defaultConnectionName): Channel
-    abstract fun closeChannel(channelId: Int = 1, connectionId: String = configuration.defaultConnectionName)
+    abstract suspend fun getChannel(
+        channelId: Int = 1,
+        connectionId: String = configuration.defaultConnectionName,
+    ): Channel
 
-    abstract fun close()
+    abstract suspend fun closeChannel(channelId: Int = 1, connectionId: String = configuration.defaultConnectionName)
+
+    abstract suspend fun close()
 
 }

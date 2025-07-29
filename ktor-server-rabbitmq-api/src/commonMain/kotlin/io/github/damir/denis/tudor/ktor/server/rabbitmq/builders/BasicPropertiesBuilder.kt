@@ -24,7 +24,7 @@ class BasicPropertiesBuilder {
     var appId: String by Delegator()
     var clusterId: String by Delegator()
 
-    fun build(): Properties {
+    suspend fun build(): Properties {
         return delegatorScope(on = this@BasicPropertiesBuilder) {
             Properties(
                 if (verify(::contentType)) contentType else null,

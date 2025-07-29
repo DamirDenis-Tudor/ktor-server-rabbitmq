@@ -16,7 +16,7 @@ class BasicAckBuilder(private val channel: Channel) {
         multiple = false
     }
 
-    fun build() = delegatorScope(on = this@BasicAckBuilder) {
+    suspend fun build() = delegatorScope(on = this@BasicAckBuilder) {
         return@delegatorScope when {
             verify(::deliveryTag, ::multiple) -> {
                 channel.basicAck(deliveryTag, multiple)

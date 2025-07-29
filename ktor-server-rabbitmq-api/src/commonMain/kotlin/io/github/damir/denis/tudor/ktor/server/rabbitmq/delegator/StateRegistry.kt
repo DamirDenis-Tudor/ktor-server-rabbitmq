@@ -48,7 +48,7 @@ object StateRegistry {
      * @param on the reference to the current object.
      * @param block the block of code to execute with the context of this object.
      */
-    fun <T : Any> delegatorScope(on: Any, block: () -> T): T {
+    suspend fun <T : Any> delegatorScope(on: Any, block: suspend () -> T): T {
         ref.set(on)
 
         logger.set(KtorSimpleLogger(on.javaClass.name))

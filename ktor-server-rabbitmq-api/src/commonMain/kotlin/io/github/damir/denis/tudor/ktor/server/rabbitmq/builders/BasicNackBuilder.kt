@@ -18,7 +18,7 @@ class BasicNackBuilder(private val channel: Channel) {
         requeue = false
     }
 
-    fun build() = delegatorScope(on = this@BasicNackBuilder) {
+    suspend fun build() = delegatorScope(on = this@BasicNackBuilder) {
         return@delegatorScope when {
             verify(::deliveryTag, ::multiple, ::requeue) -> {
                 channel.basicNack(deliveryTag, multiple, requeue)

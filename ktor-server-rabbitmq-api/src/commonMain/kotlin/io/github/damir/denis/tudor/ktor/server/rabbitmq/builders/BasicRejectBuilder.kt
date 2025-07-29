@@ -16,7 +16,7 @@ class BasicRejectBuilder(private val channel: Channel) {
         requeue = false
     }
 
-    fun build() = delegatorScope(on = this@BasicRejectBuilder) {
+    suspend fun build() = delegatorScope(on = this@BasicRejectBuilder) {
         return@delegatorScope when {
             verify(::deliveryTag, ::requeue) -> {
                 channel.basicReject(deliveryTag, requeue)

@@ -4,8 +4,8 @@ interface Connection {
 
     val isOpen: Boolean
 
-    fun createChannel(): Channel?
+    suspend fun createChannel(): Channel?
 
-    fun close()
+    suspend fun close()
 
 }

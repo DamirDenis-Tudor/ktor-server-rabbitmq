@@ -10,19 +10,19 @@ class JavaChannel(
     override val closeReason: String?
         get() = channel.closeReason.message
 
-    override fun basicAck(deliveryTag: Long, multiple: Boolean) =
+    override suspend fun basicAck(deliveryTag: Long, multiple: Boolean) =
         channel.basicAck(deliveryTag, multiple)
 
-    override fun basicNack(deliveryTag: Long, multiple: Boolean, requeue: Boolean) =
+    override suspend fun basicNack(deliveryTag: Long, multiple: Boolean, requeue: Boolean) =
         channel.basicNack(deliveryTag, multiple, requeue)
 
-    override fun basicReject(deliveryTag: Long, requeue: Boolean) =
+    override suspend fun basicReject(deliveryTag: Long, requeue: Boolean) =
         channel.basicReject(deliveryTag, requeue)
 
-    override fun basicGet(queue: String, autoAck: Boolean): GetResponse =
+    override suspend fun basicGet(queue: String, autoAck: Boolean): GetResponse =
         channel.basicGet(queue, autoAck).let(::GetResponse)
 
-    override fun basicPublish(
+    override suspend fun basicPublish(
         exchange: String,
         routingKey: String,
         mandatory: Boolean,
@@ -38,7 +38,7 @@ class JavaChannel(
         message
     )
 
-    override fun basicConsume(
+    override suspend fun basicConsume(
         queue: String,
         autoAck: Boolean,
         consumerTag: String,
@@ -66,10 +66,10 @@ class JavaChannel(
         }
     )
 
-    override fun basicQos(prefetchSize: Int, prefetchCount: Int, global: Boolean) =
+    override suspend fun basicQos(prefetchSize: Int, prefetchCount: Int, global: Boolean) =
         channel.basicQos(prefetchSize, prefetchCount, global)
 
-    override fun exchangeDeclare(
+    override suspend fun exchangeDeclare(
         exchange: String,
         type: String,
         durable: Boolean,
@@ -85,19 +85,19 @@ class JavaChannel(
         arguments
     ).let(::ExchangeDeclareOk)
 
-    override fun exchangeDelete(exchange: String, ifUnused: Boolean): ExchangeDeleteOk =
+    override suspend fun exchangeDelete(exchange: String, ifUnused: Boolean): ExchangeDeleteOk =
         channel.exchangeDelete(exchange, ifUnused).let(::ExchangeDeleteOk)
 
-    override fun messageCount(queue: String): Long =
+    override suspend fun messageCount(queue: String): Long =
         channel.messageCount(queue)
 
-    override fun consumerCount(queue: String): Long =
+    override suspend fun consumerCount(queue: String): Long =
         channel.consumerCount(queue)
 
-    override fun queueBind(queue: String, exchange: String, routingKey: String, arguments: Map<String, Any>) =
+    override suspend fun queueBind(queue: String, exchange: String, routingKey: String, arguments: Map<String, Any>) =
         channel.queueBind(queue, exchange, routingKey, arguments).let(::QueueBindOk)
 
-    override fun queueUnbind(
+    override suspend fun queueUnbind(
         queue: String,
         exchange: String,
         routingKey: String,
@@ -109,7 +109,7 @@ class JavaChannel(
         arguments
     ).let(::QueueUnbindOk)
 
-    override fun queueDeclare(
+    override suspend fun queueDeclare(
         queue: String,
         durable: Boolean,
         exclusive: Boolean,
@@ -123,10 +123,10 @@ class JavaChannel(
         arguments
     ).let(::QueueDeclareOk)
 
-    override fun queueDelete(queue: String, ifUnused: Boolean, ifEmpty: Boolean): QueueDeleteOk =
+    override suspend fun queueDelete(queue: String, ifUnused: Boolean, ifEmpty: Boolean): QueueDeleteOk =
         channel.queueDelete(queue, ifUnused, ifEmpty).let(::QueueDeleteOk)
 
-    override fun close() =
+    override suspend fun close() =
         channel.close()
 
 }

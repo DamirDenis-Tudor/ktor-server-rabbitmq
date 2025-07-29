@@ -7,10 +7,10 @@ class JavaConnection(
     override val isOpen: Boolean
         get() = connection.isOpen
 
-    override fun createChannel(): Channel? =
+    override suspend fun createChannel(): Channel? =
         connection.createChannel()?.let(::JavaChannel)
 
-    override fun close() =
+    override suspend fun close() =
         connection.close()
 
 }

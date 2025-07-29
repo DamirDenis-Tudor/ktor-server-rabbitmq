@@ -21,7 +21,18 @@ import kotlinx.coroutines.launch
  */
 class PluginContext(
     override val connectionManager: ConnectionManager,
+    channel: Channel,
 ) : ChannelContext(
+    connectionManager = connectionManager,
+    channel = channel,
+)
+
+/**
+ * Creates a `PluginContext` using the default connection and channel from the `ConnectionManager`.
+ */
+suspend fun PluginContext(
+    connectionManager: ConnectionManager,
+) = PluginContext(
     connectionManager = connectionManager,
     channel = connectionManager.getChannel()
 )
@@ -59,7 +70,7 @@ class PluginContext(
  * @since 1.2.3
  */
 @RabbitDslMarker
-fun PluginContext.channel(
+suspend fun PluginContext.channel(
     block: suspend ChannelContext.() -> Unit,
 ) = with(connectionManager) {
     getChannel().also {

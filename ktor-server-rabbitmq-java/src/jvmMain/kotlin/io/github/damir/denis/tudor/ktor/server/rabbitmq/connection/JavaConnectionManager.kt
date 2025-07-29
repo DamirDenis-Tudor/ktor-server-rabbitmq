@@ -7,6 +7,8 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.JavaConnection
 import io.ktor.util.logging.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.FileInputStream
 import java.lang.Thread.sleep
 import java.security.KeyStore
@@ -41,6 +43,9 @@ open class JavaConnectionManager(
     private val connectionCache = ConcurrentHashMap<String, Connection>()
 
     private val logger = KtorSimpleLogger(this.javaClass.name)
+
+    private val connectionMutex = Mutex()
+    private val channelMutex = Mutex()
 
     private val executor = createExecutor()
     private val convertedDispatcher = executor.asCoroutineDispatcher()
@@ -135,7 +140,7 @@ open class JavaConnectionManager(
      * @throws IllegalStateException if the block fails after the maximum number of retries.
      */
     @Synchronized
-    private fun <T> retry(block: () -> T): T {
+    private inline fun <T> retry(block: () -> T): T {
         repeat(config.connectionAttempts) { index ->
             runCatching { block() }
                 .onSuccess {
@@ -156,32 +161,6 @@ open class JavaConnectionManager(
     }
 
     /**
-     * Retrieves or creates a RabbitMQ connection by its ID.
-     *
-     * If the connection is not found in the cache or is closed, a new connection is created.
-     *
-     * @param id the ID of the connection to retrieve. Defaults to the default connection name.
-     * @return the RabbitMQ connection.
-     */
-    @Synchronized
-    override fun getConnection(id: String): Connection = retry {
-        if (connectionCache.containsKey(id)) {
-            logger.debug("Connection with id: <$id> taken from cache.")
-        }
-
-        val connection = connectionCache.getOrPut(id) {
-            logger.debug("Creating new connection with id: <$id>.")
-            connectionFactory.newConnection(id)?.let(::JavaConnection)
-                ?: error("Connection with id <$id> was not created.")
-        }
-
-        if (!connection.isOpen)
-            error("Connection <$id> is not open.")
-
-        return@retry connection
-    }
-
-    /**
      * Retrieves the ID of a connection from the cache.
      *
      * @param connection The RabbitMQ connection to identify.
@@ -192,12 +171,38 @@ open class JavaConnectionManager(
         connectionCache.entries.find { it.value == connection }?.key ?: config.defaultConnectionName
 
     /**
+     * Retrieves or creates a RabbitMQ connection by its ID.
+     *
+     * If the connection is not found in the cache or is closed, a new connection is created.
+     *
+     * @param id the ID of the connection to retrieve. Defaults to the default connection name.
+     * @return the RabbitMQ connection.
+     */
+    override suspend fun getConnection(id: String): Connection = connectionMutex.withLock {
+        retry {
+            if (connectionCache.containsKey(id)) {
+                logger.debug("Connection with id: <$id> taken from cache.")
+            }
+
+            val connection = connectionCache.getOrPut(id) {
+                logger.debug("Creating new connection with id: <$id>.")
+                connectionFactory.newConnection(id)?.let(::JavaConnection)
+                    ?: error("Connection with id <$id> was not created.")
+            }
+
+            if (!connection.isOpen)
+                error("Connection <$id> is not open.")
+
+            return@retry connection
+        }
+    }
+
+    /**
      * Closes and removes a RabbitMQ connection by its ID.
      *
      * @param connectionId the ID of the connection to close.
      */
-    @Synchronized
-    override fun closeConnection(connectionId: String) {
+    override suspend fun closeConnection(connectionId: String) = connectionMutex.withLock {
         connectionCache[connectionId]?.close()
         connectionCache.remove(connectionId)
 
@@ -213,25 +218,27 @@ open class JavaConnectionManager(
      * @param connectionId the ID of the connection to use. Defaults to the default connection name.
      * @return the RabbitMQ channel.
      */
-    @Synchronized
-    override fun getChannel(channelId: Int, connectionId: String): Channel = retry {
-        val id = getChannelKey(connectionId, channelId)
+    override suspend fun getChannel(channelId: Int, connectionId: String): Channel = channelMutex.withLock {
+        retry {
+            val id = getChannelKey(connectionId, channelId)
 
-        if (channelCache.containsKey(id)) {
-            logger.debug("Channel with id: <$id> will be taken from cache.")
+            if (channelCache.containsKey(id)) {
+                logger.debug("Channel with id: <$id> will be taken from cache.")
+            }
+
+            val channel = channelCache.getOrPut(id) {
+                logger.debug("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
+                getConnection(connectionId).createChannel()
+                    ?: error("Could not allocate this channel id <$channelId>. ")
+            }
+
+            if (!channel.isOpen) {
+                channelCache.remove(id)
+                error("Channel <$channelId> is not open. ${channel.closeReason}")
+            }
+
+            return@retry channel
         }
-
-        val channel = channelCache.getOrPut(id) {
-            logger.debug("Creating new channel with id <$channelId> for connection with id <$connectionId>.")
-            getConnection(connectionId).createChannel() ?: error("Could not allocate this channel id <$channelId>. ")
-        }
-
-        if (!channel.isOpen) {
-            channelCache.remove(id)
-            error("Channel <$channelId> is not open. ${channel.closeReason}")
-        }
-
-        return@retry channel
     }
 
     /**
@@ -240,8 +247,7 @@ open class JavaConnectionManager(
      * @param channelId the ID of the channel to close.
      * @param connectionId the ID of the associated connection.
      */
-    @Synchronized
-    override fun closeChannel(channelId: Int, connectionId: String) {
+    override suspend fun closeChannel(channelId: Int, connectionId: String) = channelMutex.withLock {
         val id = getChannelKey(connectionId, channelId)
 
         channelCache[id]?.close()
@@ -255,8 +261,7 @@ open class JavaConnectionManager(
      *
      * This method iterates through all connections in the connection cache and closes each one.
      */
-    @Synchronized
-    override fun close() {
+    override suspend fun close() = connectionMutex.withLock {
         connectionCache.values.forEach { connection -> connection.close() }
     }
 }

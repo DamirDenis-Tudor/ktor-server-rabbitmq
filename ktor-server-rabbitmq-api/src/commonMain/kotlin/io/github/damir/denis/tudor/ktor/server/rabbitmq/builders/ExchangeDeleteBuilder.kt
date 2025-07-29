@@ -17,7 +17,7 @@ class ExchangeDeleteBuilder(private val channel: Channel) {
         ifUnused = false
     }
 
-    fun build(): ExchangeDeleteOk = delegatorScope(on = this@ExchangeDeleteBuilder) {
+    suspend fun build(): ExchangeDeleteOk = delegatorScope(on = this@ExchangeDeleteBuilder) {
         return@delegatorScope when {
             verify(::exchange, ::ifUnused) -> {
                 channel.exchangeDelete(exchange, ifUnused)

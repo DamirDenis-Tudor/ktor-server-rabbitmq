@@ -13,7 +13,7 @@ class BasicQosBuilder(private val channel: Channel) {
     var prefetchCount: Int by Delegator()
     var global: Boolean by Delegator()
 
-    fun build() = delegatorScope(on = this@BasicQosBuilder) {
+    suspend fun build() = delegatorScope(on = this@BasicQosBuilder) {
         return@delegatorScope when {
             verify(::prefetchCount, ::prefetchCount, ::global) -> {
                 channel.basicQos(prefetchSize, prefetchCount, global)

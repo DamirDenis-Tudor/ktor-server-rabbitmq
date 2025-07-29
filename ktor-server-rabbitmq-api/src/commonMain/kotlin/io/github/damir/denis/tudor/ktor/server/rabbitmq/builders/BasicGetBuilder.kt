@@ -13,7 +13,7 @@ class BasicGetBuilder(private val channel: Channel) {
     var queue: String by Delegator()
     var autoAck: Boolean by Delegator()
 
-    fun build(): GetResponse = delegatorScope(on = this@BasicGetBuilder) {
+    suspend fun build(): GetResponse = delegatorScope(on = this@BasicGetBuilder) {
         return@delegatorScope when {
             verify(::queue, ::autoAck) -> {
                 channel.basicGet(queue, autoAck)

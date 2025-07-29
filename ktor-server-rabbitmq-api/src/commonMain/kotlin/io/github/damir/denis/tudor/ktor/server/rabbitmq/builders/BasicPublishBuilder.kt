@@ -36,7 +36,7 @@ class BasicPublishBuilder(
         message = Json.encodeToString(block).toByteArray(Charsets.UTF_8)
     }
 
-    fun build() = delegatorScope(on = this@BasicPublishBuilder) {
+    suspend fun build() = delegatorScope(on = this@BasicPublishBuilder) {
         return@delegatorScope when {
             verify(::exchange, ::routingKey, ::message, ::mandatory, ::immediate, ::properties) -> {
                 channel.basicPublish(

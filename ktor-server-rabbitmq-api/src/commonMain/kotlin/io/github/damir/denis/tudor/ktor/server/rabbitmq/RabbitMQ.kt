@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.util.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 val ConnectionManagerKey = AttributeKey<ConnectionManager>("ConnectionManager")
 
@@ -23,7 +24,7 @@ fun createRabbitMQPlugin(
 
         application.attributes.put(ConnectionManagerKey, this)
         application.monitor.subscribe(ApplicationStopping) {
-            close()
+            runBlocking { close() }
         }
     }
 }

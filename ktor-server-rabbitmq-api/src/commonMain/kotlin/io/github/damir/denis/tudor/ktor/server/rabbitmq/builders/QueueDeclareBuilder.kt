@@ -23,7 +23,7 @@ class QueueDeclareBuilder(private val channel: Channel) {
         arguments = emptyMap()
     }
 
-    fun build(): QueueDeclareOk = delegatorScope(on = this@QueueDeclareBuilder) {
+    suspend fun build(): QueueDeclareOk = delegatorScope(on = this@QueueDeclareBuilder) {
         return@delegatorScope when {
             verify(::queue, ::durable, ::exclusive, ::autoDelete, ::arguments) -> {
                 channel.queueDeclare(queue, durable, exclusive, autoDelete, arguments)

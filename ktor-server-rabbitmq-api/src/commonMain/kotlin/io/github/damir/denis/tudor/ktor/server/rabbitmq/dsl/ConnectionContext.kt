@@ -64,7 +64,7 @@ class ConnectionContext(
  * @since 1.3.3
  */
 @RabbitDslMarker
-fun ConnectionContext.channel(
+suspend fun ConnectionContext.channel(
     block: suspend ChannelContext.() -> Unit,
 ) = with(connectionManager) {
     getChannel(connectionId = getConnectionId(connection)).also {

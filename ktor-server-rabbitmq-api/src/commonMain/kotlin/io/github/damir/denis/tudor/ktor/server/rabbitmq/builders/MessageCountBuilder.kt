@@ -11,7 +11,7 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Channel
 class MessageCountBuilder(private val channel: Channel) {
     var queue: String by Delegator()
 
-    fun build(): Long = delegatorScope(on = this@MessageCountBuilder) {
+    suspend fun build(): Long = delegatorScope(on = this@MessageCountBuilder) {
         return@delegatorScope when {
             verify(::queue) -> {
                 channel.messageCount(queue)

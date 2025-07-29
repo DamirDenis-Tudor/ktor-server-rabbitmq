@@ -25,7 +25,7 @@ class ExchangeDeclareBuilder(private val channel: Channel) {
         arguments = emptyMap()
     }
 
-    fun build(): ExchangeDeclareOk = delegatorScope(on = this@ExchangeDeclareBuilder) {
+    suspend fun build(): ExchangeDeclareOk = delegatorScope(on = this@ExchangeDeclareBuilder) {
         return@delegatorScope when {
             verify(::exchange, ::type, ::durable, ::autoDelete, ::internal, ::arguments) -> {
                 channel.exchangeDeclare(exchange, type, durable, autoDelete, internal, arguments)

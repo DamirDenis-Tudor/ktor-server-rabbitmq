@@ -15,7 +15,7 @@ class QueueUnbindBuilder(private val channel: Channel) {
     var routingKey: String by Delegator()
     var arguments: Map<String, Any> by Delegator()
 
-    fun build(): QueueUnbindOk = delegatorScope(on = this@QueueUnbindBuilder) {
+    suspend fun build(): QueueUnbindOk = delegatorScope(on = this@QueueUnbindBuilder) {
         return@delegatorScope when {
             verify(::queue, ::exchange, ::routingKey, ::arguments) -> {
                 channel.queueUnbind(queue, exchange, routingKey, arguments)

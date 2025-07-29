@@ -170,7 +170,7 @@ class BasicConsumeBuilder(
         }
     }
 
-    fun build(): String = delegatorScope(on = this@BasicConsumeBuilder) {
+    suspend fun build(): String = delegatorScope(on = this@BasicConsumeBuilder) {
         return@delegatorScope when {
             verify(
                 ::queue,

@@ -14,7 +14,7 @@ class QueueDeleteBuilder(private val channel: Channel) {
     var ifUnused: Boolean by Delegator()
     var ifEmpty: Boolean by Delegator()
 
-    fun build(): QueueDeleteOk = delegatorScope(on = this@QueueDeleteBuilder) {
+    suspend fun build(): QueueDeleteOk = delegatorScope(on = this@QueueDeleteBuilder) {
         return@delegatorScope when {
             verify(::queue, ::ifUnused, ::ifEmpty) -> {
                 channel.queueDelete(queue, ifUnused, ifEmpty)

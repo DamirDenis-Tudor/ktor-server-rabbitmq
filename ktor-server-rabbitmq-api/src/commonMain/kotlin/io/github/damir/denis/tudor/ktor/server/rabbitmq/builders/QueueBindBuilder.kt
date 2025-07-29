@@ -19,7 +19,7 @@ class QueueBindBuilder(private val channel: Channel) {
         routingKey = ""
     }
 
-    fun build(): QueueBindOk = delegatorScope(on = this@QueueBindBuilder) {
+    suspend fun build(): QueueBindOk = delegatorScope(on = this@QueueBindBuilder) {
         return@delegatorScope when {
             verify(::queue, ::exchange, ::routingKey, ::arguments) -> {
                 channel.queueBind(queue, exchange, routingKey, arguments)
