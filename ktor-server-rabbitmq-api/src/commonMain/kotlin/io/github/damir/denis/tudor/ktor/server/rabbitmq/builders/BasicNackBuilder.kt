@@ -1,0 +1,33 @@
+package io.github.damir.denis.tudor.ktor.server.rabbitmq.builders
+
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.Delegator
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.delegatorScope
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.logStateTrace
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.verify
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Channel
+
+@RabbitDslMarker
+class BasicNackBuilder(private val channel: Channel) {
+    var deliveryTag: Long by Delegator()
+    var multiple: Boolean by Delegator()
+    var requeue: Boolean by Delegator()
+
+    init {
+        multiple = false
+        requeue = false
+    }
+
+    suspend fun build() = delegatorScope(on = this@BasicNackBuilder) {
+        return@delegatorScope when {
+            verify(::deliveryTag, ::multiple, ::requeue) -> {
+                channel.basicNack(deliveryTag, multiple, requeue)
+            }
+
+            else -> {
+                logStateTrace()
+                error("Unexpected combination of parameters")
+            }
+        }
+    }
+}
