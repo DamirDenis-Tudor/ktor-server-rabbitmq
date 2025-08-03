@@ -1,6 +1,43 @@
 plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.maven)
+}
+
+mavenPublishing {
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL, true)
+    signAllPublications()
+    pom {
+        name.set("Ktor RabbitMQ plugin API")
+        description.set(
+            "Common APIs for the Ktor RabbitMQ plugin, providing shared functionality across different implementations (Java and Kourier)."
+        )
+
+        url.set(project.ext.get("url")?.toString())
+        licenses {
+            license {
+                name.set(project.ext.get("license.name")?.toString())
+                url.set(project.ext.get("license.url")?.toString())
+            }
+        }
+        developers {
+            developer {
+                id.set(project.ext.get("developer.1.id")?.toString())
+                name.set(project.ext.get("developer.1.name")?.toString())
+                email.set(project.ext.get("developer.1.email")?.toString())
+                url.set(project.ext.get("developer.1.url")?.toString())
+            }
+            developer {
+                id.set(project.ext.get("developer.2.id")?.toString())
+                name.set(project.ext.get("developer.2.name")?.toString())
+                email.set(project.ext.get("developer.2.email")?.toString())
+                url.set(project.ext.get("developer.2.url")?.toString())
+            }
+        }
+        scm {
+            url.set(project.ext.get("scm.url")?.toString())
+        }
+    }
 }
 
 kotlin {
