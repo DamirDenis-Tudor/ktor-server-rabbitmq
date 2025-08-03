@@ -16,6 +16,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run
+      - name: Run Java Testing
         run: |
-          ./gradlew test
+          ./gradlew ktor-server-rabbitmq-java:allTests
