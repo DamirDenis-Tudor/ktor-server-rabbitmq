@@ -8,12 +8,11 @@ mavenPublishing {
     publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL, true)
     signAllPublications()
     pom {
-        name.set("Ktor RabbitMQ plugin")
+        name.set("Ktor RabbitMQ plugin Kourier Implementation")
         description.set(
-            "A Ktor plugin for RabbitMQ that provides access to all the core functionalities of the com.rabbitmq:amqp-client.\n" +
+            "A Ktor plugin for RabbitMQ that provides access to all the core functionalities of the dev.kourier:amqp-client.\n" +
                     "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n"
         )
-
         url.set(project.ext.get("url")?.toString())
         licenses {
             license {
@@ -67,26 +66,40 @@ kotlin {
 
     // jvm & js
     jvmToolchain(17)
-    jvm()
+    jvm {
+        testRuns.named("test") {
+            executionTask.configure {
+                useJUnitPlatform()
+                testLogging {
+                    events("passed", "skipped", "failed")
+                    showCauses = true
+                    showStackTraces = true
+                    showExceptions = true
+                    info.events = debug.events
+                }
+            }
+        }
+    }
 
     applyDefaultHierarchyTemplate()
     sourceSets {
-        val commonMain by getting {}
-        val jvmMain by getting {
+        val commonMain by getting {
             dependencies {
-                api(project(":ktor-server-rabbitmq-java"))
+                api(project(":ktor-server-rabbitmq-api"))
+                api(libs.amqp.kourier)
+                implementation(libs.logback.classic)
             }
         }
-        val nonJvmMain by creating {
-            dependsOn(commonMain)
+        val jvmTest by getting {
             dependencies {
-                api(project(":ktor-server-rabbitmq-kourier"))
+                implementation(kotlin("test"))
+                implementation(libs.tests.mockk)
+                implementation(libs.ktor.server.test.host)
+                implementation(libs.tests.containers)
+                implementation(libs.tests.containers.rabbitmq)
+                implementation(libs.tests.junit.jupiter.api)
+                implementation(libs.tests.junit.jupiter.engine)
             }
         }
-
-        // Make all non-JVM targets depend on the `nonJvmMain` source set
-        sourceSets
-            .filter { it.name.endsWith("Main") && it.name != "commonMain" && it.name != "jvmMain" }
-            .forEach { it.dependsOn(nonJvmMain) }
     }
 }

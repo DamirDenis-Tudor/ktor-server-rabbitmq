@@ -20,7 +20,7 @@ dependencyResolutionManagement {
 
             // AMQP clients
             library("amqp-java", "com.rabbitmq:amqp-client:5.24.0")
-            library("amqp-kourier", "dev.kourier:amqp-client:0.1.1")
+            library("amqp-kourier", "dev.kourier:amqp-client-robust:0.2.2")
 
             // Tests
             library("tests-mockk", "io.mockk:mockk:1.13.12")
@@ -39,3 +39,4 @@ rootProject.name = "ktor-server-rabbitmq"
 include(":ktor-server-rabbitmq")
 include(":ktor-server-rabbitmq-api")
 include(":ktor-server-rabbitmq-java")
+include(":ktor-server-rabbitmq-kourier")

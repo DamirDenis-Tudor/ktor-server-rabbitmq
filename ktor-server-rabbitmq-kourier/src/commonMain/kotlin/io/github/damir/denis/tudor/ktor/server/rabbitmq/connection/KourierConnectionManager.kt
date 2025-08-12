@@ -1,21 +1,13 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.connection
 
-import com.rabbitmq.client.ConnectionFactory
+import dev.kourier.amqp.AMQPException
+import dev.kourier.amqp.connection.AMQPConfig
+import dev.kourier.amqp.connection.amqpConfig
+import dev.kourier.amqp.robust.createRobustAMQPConnection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Connection
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.JavaConnection
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.KourierConnection
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
-import java.io.FileInputStream
-import java.lang.Thread.sleep
-import java.security.KeyStore
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.KeyManagerFactory
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
 
 /**
  * Manages RabbitMQ connections and channels with optional TLS support.
@@ -29,18 +21,15 @@ import javax.net.ssl.TrustManagerFactory
  * @author Damir Denis-Tudor
  * @version 1.0.0
  */
-open class JavaConnectionManager(
+open class KourierConnectionManager(
     private val scope: CoroutineScope,
     private val config: ConnectionConfig,
 ) : ConnectionManager() {
 
-    private val connectionFactory = ConnectionFactory()
-
-    private val executor = createExecutor()
-    private val convertedDispatcher = executor.asCoroutineDispatcher()
+    private val amqpConfig: AMQPConfig = amqpConfig(config.uri)
 
     override val dispatcher
-        get() = convertedDispatcher
+        get() = Dispatchers.IO
 
     override val coroutineScope
         get() = config.scope ?: scope
@@ -48,48 +37,15 @@ open class JavaConnectionManager(
     override val configuration
         get() = config
 
-    init {
-        connectionFactory.apply {
-            if (config.tlsEnabled) enableTLS()
-            setUri(config.uri)
-            setSharedExecutor(executor)
-            isAutomaticRecoveryEnabled = true;
-        }
-    }
-
-    /**
-     * Creates and returns an ExecutorService based on the provided configuration.
-     *
-     * This method checks the configuration to determine whether a cached thread pool
-     * or a fixed-size thread pool should be used. The choice depends on the value of
-     * `config.dispatcherThreadPollSize`. A custom `ThreadFactory` is used to name
-     * threads uniquely and mark them as daemon threads, ensuring they don't block JVM shutdown.
-     *
-     * @return An ExecutorService either as a cached thread pool or fixed-size thread pool.
-     */
-    private fun createExecutor(): ExecutorService {
-        val threadIdCounter = AtomicInteger(-1)
-        val threadFactory = ThreadFactory { runnable ->
-            val threadName = "rabbitMQ-${threadIdCounter.incrementAndGet()}"
-            logger.debug("Creating new thread with ID <$threadName>")
-            Thread(runnable, threadName).apply { isDaemon = true }
-        }
-        return if (config.dispatcherThreadPollSize == 0) {
-            logger.debug("Creating newCachedThreadPool.")
-            Executors.newCachedThreadPool(threadFactory)
-        } else {
-            logger.debug("Creating newFixedThreadPool with size ${config.dispatcherThreadPollSize}.")
-            Executors.newFixedThreadPool(config.dispatcherThreadPollSize, threadFactory)
-        }
-    }
-
     /**
      * Enables TLS (Transport Layer Security) for RabbitMQ connections.
      *
      * This method loads the necessary keystore and truststore files, initializes SSLContext,
      * and configures the connection factory to use the secure protocol.
      */
-    private fun ConnectionFactory.enableTLS() {
+    private fun enableTLS() {
+        // TODO
+        /*
         val keyStore = KeyStore.getInstance("PKCS12").apply {
             load(FileInputStream(config.tlsKeystorePath), config.tlsKeystorePassword.toCharArray())
         }
@@ -109,6 +65,7 @@ open class JavaConnectionManager(
         useSslProtocol(sslContext)
 
         logger.debug("TLS enabled for RabbitMQ connection")
+         */
     }
 
     override suspend fun <T> retry(block: suspend () -> T): T {
@@ -118,9 +75,9 @@ open class JavaConnectionManager(
                     return@retry it
                 }.onFailure {
                     when {
-                        it is java.net.ConnectException -> {
+                        it is AMQPException -> {
                             logger.warn("Attempt ${index + 1} failed: $it.")
-                            sleep(config.attemptDelay * 1000L)
+                            delay(config.attemptDelay * 1000L)
                         }
 
                         else -> throw it
@@ -128,7 +85,7 @@ open class JavaConnectionManager(
                 }
         }
 
-        throw InterruptedException("Failed after ${config.connectionAttempts} retries")
+        throw CancellationException("Failed after ${config.connectionAttempts} retries")
     }
 
     override suspend fun getConnection(id: String): Connection = connectionMutex.withLock {
@@ -137,8 +94,10 @@ open class JavaConnectionManager(
 
             val connection = connectionCache.getOrPut(id) {
                 logger.debug("Creating new connection with id: <$id>.")
-                connectionFactory.newConnection(id)?.let(::JavaConnection)
-                    ?: error("Connection with id <$id> was not created.")
+                createRobustAMQPConnection(
+                    coroutineScope,
+                    amqpConfig.copy(server = amqpConfig.server.copy(connectionName = id))
+                ).let(::KourierConnection)
             }
 
             if (!connection.isOpen) error("Connection <$id> is not open.")
