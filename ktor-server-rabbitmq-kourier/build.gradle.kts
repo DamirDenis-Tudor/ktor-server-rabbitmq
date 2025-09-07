@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.kover)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.maven)
 }
 
