@@ -11,15 +11,13 @@ import kotlin.reflect.KProperty
  *
  * @version 1.1.4
  */
+@ThreadLocal
 object StateRegistry {
     /**
      * Thread-local storage for the reference to the current object
      * and it's logger for the current thread's context.
      */
-    @ThreadLocal
     private var ref: Any? = null
-
-    @ThreadLocal
     private var logger: Logger? = null
 
     /* Default logger for fallback. */
@@ -29,7 +27,6 @@ object StateRegistry {
      * Map to store the states of properties, identified by
      * the combination of object and property name.
      */
-    @ThreadLocal
     private var states = mutableMapOf<Pair<String, String>, State<Any>>()
 
     /**
