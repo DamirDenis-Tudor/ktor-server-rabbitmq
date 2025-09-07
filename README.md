@@ -7,7 +7,9 @@
 ![Deployment Status](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/deployment.yml/badge.svg) ![Pull Request Checks](https://github.com/DamirDenis-Tudor/ktor-server-rabbitmq/actions/workflows/pull-request-checks.yml/badge.svg)
 
 ### Overview
-- This plugin provides access to major core functionalities of the `com.rabbitmq:amqp-client` library.
+
+- This plugin provides access to major core functionalities of the `com.rabbitmq:amqp-client` and
+  `dev.kourier:amqp-client` libraries.
 
 ### Features
 
@@ -20,20 +22,59 @@
 
 ### Table of Contents
 
-1. [Installation](#installation)
-2. [Queue Binding Example](#queue-binding-example)
-3. [Producer Example](#producer-example)
-4. [Consumer Example](#consumer-example)
-5. [Advanced Consumer Example](#consumer-example-with-coroutinepollsize)
-6. [Library Calls Example](#library-calls-example)
-7. [Custom Coroutine Scope Example](#custom-coroutine-scope-example)
-8. [Serialization Fallback Example](#serialization-fallback-example)
-9. [Dead Letter Queue Example](#dead-letter-queue-example)
-10. [Logging](#logging)
+1. [Choose a distribution](#choose-a-distribution)
+2. [Installation](#installation)
+3. [Queue Binding Example](#queue-binding-example)
+4. [Producer Example](#producer-example)
+5. [Consumer Example](#consumer-example)
+6. [Advanced Consumer Example](#consumer-example-with-coroutinepollsize)
+7. [Library Calls Example](#library-calls-example)
+8. [Custom Coroutine Scope Example](#custom-coroutine-scope-example)
+9. [Serialization Fallback Example](#serialization-fallback-example)
+10. [Dead Letter Queue Example](#dead-letter-queue-example)
+11. [Logging](#logging)
+
+## Choose a distribution
+
+This library is available in multiple distributions. Choose the one that best fits your needs:
+
+### Default Distribution
+
+This distribution is an alias to the Java Client distribution for the JVM platform, and to the Kourier Client
+distribution for Kotlin Native platforms.
+
+```kotlin
+dependencies {
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:<version>")
+}
+```
+
+### Java Client Distribution
+
+This distribution uses the [official RabbitMQ Java client library](https://github.com/rabbitmq/rabbitmq-java-client)
+(`com.rabbitmq:amqp-client`) under the hood, and is available only for the JVM platform.
+
+```kotlin
+dependencies {
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq-java:<version>")
+}
+```
+
+### Kourier (Pure Kotlin & Kotlin Multiplatform) Client Distribution
+
+This distribution uses the [pure Kotlin Kourier client library](https://github.com/guimauvedigital/kourier)
+(`dev.kourier:amqp-client`) under the hood, and is available for both JVM and Kotlin Native platforms.
+
+```kotlin
+dependencies {
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq-kourier:<version>")
+}
+```
 
 ## Usage
 
 ### Installation
+
 ```kotlin
 install(RabbitMQ) {
     uri = "amqp://<user>:<password>@<address>:<port>"
@@ -46,6 +87,7 @@ install(RabbitMQ) {
 ```
 
 ### Queue binding example
+
 ```kotlin
 rabbitmq {
     queueBind {
@@ -65,6 +107,7 @@ rabbitmq {
 ```
 
 ### Producer example
+
 ```kotlin
 rabbitmq {
     repeat(10) {
@@ -78,6 +121,7 @@ rabbitmq {
 ```
 
 ### Consumer Example
+
 ```kotlin
 rabbitmq {
     basicConsume {
@@ -91,6 +135,7 @@ rabbitmq {
 ```
 
 ### Consumer Example with coroutinePollSize
+
 ```kotlin
 rabbitmq {
     connection(id = "consume") {
@@ -109,6 +154,7 @@ rabbitmq {
 ```
 
 ### Consumer Example with coroutinePollSize
+
 ```kotlin
 rabbitmq {
     connection(id = "consume") {
@@ -127,6 +173,7 @@ rabbitmq {
 ```
 
 ### Library Calls Example
+
 ```kotlin
 rabbitmq {
     libChannel(id = 2) {
@@ -170,7 +217,9 @@ rabbitmq {
     }
 }
 ```
+
 ### Custom Coroutine Scope Example
+
 ```kotlin
 val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
     println("ExceptionHandler got $throwable")
@@ -354,5 +403,6 @@ fun Application.module() {
 - In order to set a logging level to this library add this line in `logback.xml` file:
 
 ```xml
+
 <logger name="io.github.damir.denis.tudor.ktor.server.rabbitmq" level="DEBUG"/>
 ```
