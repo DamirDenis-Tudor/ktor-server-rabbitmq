@@ -72,8 +72,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(kotlin("reflect"))
                 api(libs.ktor.server.core)
-                //api(libs.ktor.server.netty) // TODO: What is this used for?
                 api(libs.kotlinx.coroutines)
                 api(libs.kotlinx.serialization.json)
             }

@@ -67,6 +67,8 @@ kotlin {
             }
         }
         val jvmTest by getting {
+            kotlin.srcDir("${project(":ktor-server-rabbitmq-api").projectDir}/src/sharedTest/kotlin")
+            resources.srcDir("${project(":ktor-server-rabbitmq-api").projectDir}/src/sharedTest/resources")
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.tests.mockk)

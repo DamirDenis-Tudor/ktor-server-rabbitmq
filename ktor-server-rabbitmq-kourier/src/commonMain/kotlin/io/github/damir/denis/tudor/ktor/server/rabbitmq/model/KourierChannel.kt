@@ -11,7 +11,7 @@ class KourierChannel(
 ) : Channel {
 
     override val isOpen: Boolean
-        get() = channel.state == ConnectionState.CLOSED
+        get() = channel.state == ConnectionState.OPEN
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val closeReason: String?

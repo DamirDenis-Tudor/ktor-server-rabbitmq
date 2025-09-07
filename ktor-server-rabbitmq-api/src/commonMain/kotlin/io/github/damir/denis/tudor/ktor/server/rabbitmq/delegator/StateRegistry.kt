@@ -1,8 +1,8 @@
 package io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator
 
 import io.ktor.util.logging.*
+import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.memberProperties
 
 /**
  * StateRegistry is a utility object to manage and trace the initialization
@@ -16,19 +16,21 @@ object StateRegistry {
      * Thread-local storage for the reference to the current object
      * and it's logger for the current thread's context.
      */
-    private val ref = ThreadLocal<Any?>()
-    private val logger = ThreadLocal<Logger>()
+    @ThreadLocal
+    private var ref: Any? = null
+
+    @ThreadLocal
+    private var logger: Logger? = null
 
     /* Default logger for fallback. */
-    private val defaultLogger = KtorSimpleLogger(this.javaClass.name)
+    private val defaultLogger = KtorSimpleLogger(this::class.qualifiedName!!)
 
     /**
-     * Thread-local map to store the states of properties, identified by
+     * Map to store the states of properties, identified by
      * the combination of object and property name.
      */
-    private val states = ThreadLocal.withInitial {
-        mutableMapOf<Pair<String, String>, State<Any>>()
-    }
+    @ThreadLocal
+    private var states = mutableMapOf<Pair<String, String>, State<Any>>()
 
     /**
      * Adds a state for a given property.
@@ -38,7 +40,7 @@ object StateRegistry {
      * @param state the state to assign to the property.
      */
     fun addState(propertyOf: String, propertyName: String, state: State<Any>) {
-        states.get()[propertyOf to propertyName] = state
+        states[propertyOf to propertyName] = state
     }
 
     /**
@@ -49,23 +51,21 @@ object StateRegistry {
      * @param block the block of code to execute with the context of this object.
      */
     suspend fun <T : Any> delegatorScope(on: Any, block: suspend () -> T): T {
-        ref.set(on)
+        ref = on
 
-        logger.set(KtorSimpleLogger(on.javaClass.name))
-        logger.get().trace("DelegatorScope used for <${on.javaClass.simpleName}>.")
+        logger = KtorSimpleLogger(on::class.qualifiedName!!)
+        logger!!.trace("DelegatorScope used for <${on::class.simpleName}>.")
 
         return try {
             block()
         } finally {
-            logger.set(defaultLogger)
+            logger = defaultLogger
 
-            states.set(
-                states.get().filter {
-                    it.key.first != ref.get()?.javaClass?.name
-                }.toMutableMap()
-            )
+            states = states.filter {
+                it.key.first != ref!!::class.qualifiedName
+            }.toMutableMap()
 
-            ref.remove()
+            ref = null
         }
     }
 
@@ -76,9 +76,9 @@ object StateRegistry {
      * @return true if all properties are initialized, false otherwise.
      */
     fun verify(vararg properties: KProperty<*>): Boolean {
-        ref.get()?.let { currentRef ->
+        ref?.let { currentRef ->
             return properties.all {
-                states.get().getOrPut(currentRef.javaClass.name to it.name) {
+                states.getOrPut(currentRef::class.qualifiedName!! to it.name) {
                     State.Uninitialized
                 } !is State.Uninitialized
             }
@@ -91,15 +91,16 @@ object StateRegistry {
      *
      * @return a list of strings representing the state and value of each property.
      */
-    fun logStateTrace() {
-        val currentRef = ref.get() ?: throw IllegalStateException("No reference set for the current thread.")
+    fun logStateTrace(vararg properties: KProperty<*> = emptyArray()) {
+        val currentRef = ref ?: throw IllegalStateException("No reference set for the current thread.")
+        val currentLogger = logger ?: defaultLogger
 
-        logger.get().trace("<${ref.get()?.javaClass?.simpleName}> State trace.")
+        currentLogger.trace("<${currentRef::class.simpleName}> State trace.")
 
-        currentRef::class.memberProperties.map {
-            val state = states.get()[currentRef.javaClass.name to it.name]
+        properties.map {
+            val state = states[currentRef::class.qualifiedName to it.name]
             val value = if ((state is State.Initialized)) state.value else "Uninitialized"
-            logger.get().error("<{}> <{}>, value: <{}>", ref.get()?.javaClass?.simpleName, it.name, value)
+            currentLogger.error("<${currentRef::class.simpleName}> <${it.name}>, value: <$value>")
         }
     }
 }

@@ -65,7 +65,7 @@ kotlin {
     watchosDeviceArm64()
 
     // jvm & js
-    jvmToolchain(17)
+    jvmToolchain(21)
     jvm {
         testRuns.named("test") {
             executionTask.configure {
@@ -91,6 +91,8 @@ kotlin {
             }
         }
         val jvmTest by getting {
+            kotlin.srcDir("${project(":ktor-server-rabbitmq-api").projectDir}/src/sharedTest/kotlin")
+            resources.srcDir("${project(":ktor-server-rabbitmq-api").projectDir}/src/sharedTest/resources")
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.tests.mockk)

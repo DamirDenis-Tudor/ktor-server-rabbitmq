@@ -3,11 +3,12 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.connection
 import dev.kourier.amqp.AMQPException
 import dev.kourier.amqp.connection.AMQPConfig
 import dev.kourier.amqp.connection.amqpConfig
-import dev.kourier.amqp.robust.createRobustAMQPConnection
+import dev.kourier.amqp.connection.createAMQPConnection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.KourierConnection
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.withLock
+import kotlinx.io.files.FileNotFoundException
 
 /**
  * Manages RabbitMQ connections and channels with optional TLS support.
@@ -37,6 +38,10 @@ open class KourierConnectionManager(
     override val configuration
         get() = config
 
+    init {
+        if (config.tlsEnabled) enableTLS()
+    }
+
     /**
      * Enables TLS (Transport Layer Security) for RabbitMQ connections.
      *
@@ -45,6 +50,7 @@ open class KourierConnectionManager(
      */
     private fun enableTLS() {
         // TODO
+        throw FileNotFoundException("TLS is not yet implemented in KourierConnectionManager")
         /*
         val keyStore = KeyStore.getInstance("PKCS12").apply {
             load(FileInputStream(config.tlsKeystorePath), config.tlsKeystorePassword.toCharArray())
@@ -94,7 +100,7 @@ open class KourierConnectionManager(
 
             val connection = connectionCache.getOrPut(id) {
                 logger.debug("Creating new connection with id: <$id>.")
-                createRobustAMQPConnection(
+                createAMQPConnection(
                     coroutineScope,
                     amqpConfig.copy(server = amqpConfig.server.copy(connectionName = id))
                 ).let(::KourierConnection)

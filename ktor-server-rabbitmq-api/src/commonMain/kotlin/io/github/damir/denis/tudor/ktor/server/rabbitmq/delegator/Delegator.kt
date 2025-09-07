@@ -29,7 +29,7 @@ internal class Delegator<T : Any> {
         return when (val currentState = state) {
             is State.Initialized -> currentState.value
             else -> throw UninitializedPropertyAccessException(
-                "Property <${property.javaClass}>: <${property.name}> must be initialized before accessing."
+                "Property <${property.name}> must be initialized before accessing."
             )
         }
     }
@@ -44,7 +44,7 @@ internal class Delegator<T : Any> {
     operator fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
         state = State.Initialized(value)
         StateRegistry.addState(
-            propertyOf = thisRef.javaClass.name,
+            propertyOf = thisRef::class.qualifiedName!!,
             propertyName = property.name,
             state = state
         )
