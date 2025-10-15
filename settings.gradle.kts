@@ -2,9 +2,11 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
             // Plugins
-            version("kotlin", "2.1.0")
+            version("kotlin", "2.1.21")
             plugin("multiplatform", "org.jetbrains.kotlin.multiplatform").versionRef("kotlin")
             plugin("serialization", "org.jetbrains.kotlin.plugin.serialization").versionRef("kotlin")
+            plugin("kover", "org.jetbrains.kotlinx.kover").version("0.8.3")
+            plugin("ksp", "com.google.devtools.ksp").version("2.1.21-2.0.2")
             plugin("maven", "com.vanniktech.maven.publish").version("0.30.0")
             plugin("jreleaser", "org.jreleaser").version("1.15.0")
 
@@ -20,7 +22,7 @@ dependencyResolutionManagement {
 
             // AMQP clients
             library("amqp-java", "com.rabbitmq:amqp-client:5.24.0")
-            library("amqp-kourier", "dev.kourier:amqp-client:0.1.1")
+            library("amqp-kourier", "dev.kourier:amqp-client-robust:0.2.4")
 
             // Tests
             library("tests-mockk", "io.mockk:mockk:1.13.12")
@@ -39,3 +41,4 @@ rootProject.name = "ktor-server-rabbitmq"
 include(":ktor-server-rabbitmq")
 include(":ktor-server-rabbitmq-api")
 include(":ktor-server-rabbitmq-java")
+include(":ktor-server-rabbitmq-kourier")

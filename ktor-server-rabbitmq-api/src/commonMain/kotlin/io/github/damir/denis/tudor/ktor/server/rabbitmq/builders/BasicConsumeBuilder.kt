@@ -23,7 +23,7 @@ class BasicConsumeBuilder(
     val connectionManager: ConnectionManager,
     private val channel: Channel,
 ) {
-    val defaultLogger = KtorSimpleLogger(this.javaClass.name)
+    val defaultLogger = KtorSimpleLogger(this::class.qualifiedName!!)
 
     var noLocal: Boolean by Delegator()
     var exclusive: Boolean by Delegator()
@@ -75,10 +75,10 @@ class BasicConsumeBuilder(
                 receiverChannel.consumeAsFlow().collect { (consumerTag, delivery) ->
                     runCatching {
                         when (T::class) {
-                            String::class -> String(delivery.body) as T
+                            String::class -> delivery.body.decodeToString() as T
                             ByteArray::class -> delivery.body as T
 
-                            else -> Json.decodeFromString<T>(String(delivery.body))
+                            else -> Json.decodeFromString<T>(delivery.body.decodeToString())
                         }
                     }.onFailure { error ->
                         defaultLogger.error(error)
@@ -100,10 +100,10 @@ class BasicConsumeBuilder(
                 receiverChannel.consumeAsFlow().collect { (consumerTag, delivery) ->
                     runCatching {
                         when (T::class) {
-                            String::class -> String(delivery.body) as T
+                            String::class -> delivery.body.decodeToString() as T
                             ByteArray::class -> delivery.body as T
 
-                            else -> Json.decodeFromString<T>(String(delivery.body))
+                            else -> Json.decodeFromString<T>(delivery.body.decodeToString())
                         }
                     }.onFailure { error ->
                         defaultLogger.error(error)

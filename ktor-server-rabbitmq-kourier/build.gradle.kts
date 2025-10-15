@@ -10,9 +10,9 @@ mavenPublishing {
     publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL, true)
     signAllPublications()
     pom {
-        name.set("Ktor RabbitMQ plugin Java Implementation")
+        name.set("Ktor RabbitMQ plugin Kourier Implementation")
         description.set(
-            "A Ktor plugin for RabbitMQ that provides access to all the core functionalities of the com.rabbitmq:amqp-client.\n" +
+            "A Ktor plugin for RabbitMQ that provides access to all the core functionalities of the dev.kourier:amqp-client.\n" +
                     "It integrates seamlessly with Ktor's DSL, offering readable, maintainable, and easy-to-use functionalities.\n"
         )
         url.set(project.ext.get("url")?.toString())
@@ -43,7 +43,31 @@ mavenPublishing {
 }
 
 kotlin {
-    jvmToolchain(17)
+    // Tiers are in accordance with <https://kotlinlang.org/docs/native-target-support.html>
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    linuxX64()
+    linuxArm64()
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    mingwX64()
+    watchosDeviceArm64()
+
+    // jvm & js
+    jvmToolchain(21)
     jvm {
         testRuns.named("test") {
             executionTask.configure {
@@ -61,10 +85,10 @@ kotlin {
 
     applyDefaultHierarchyTemplate()
     sourceSets {
-        val jvmMain by getting {
+        val commonMain by getting {
             dependencies {
                 api(project(":ktor-server-rabbitmq-api"))
-                api(libs.amqp.java)
+                api(libs.amqp.kourier)
                 implementation(libs.logback.classic)
             }
         }
@@ -83,14 +107,3 @@ kotlin {
         }
     }
 }
-
-/*
-tasks.jar {
-    exclude("logback.xml")
-}
-
-tasks.register<Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-    from(tasks["javadoc"])
-}
-*/

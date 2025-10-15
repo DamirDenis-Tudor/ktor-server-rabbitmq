@@ -42,22 +42,51 @@ mavenPublishing {
 }
 
 kotlin {
+    // Tiers are in accordance with <https://kotlinlang.org/docs/native-target-support.html>
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    linuxX64()
+    linuxArm64()
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    mingwX64()
+    watchosDeviceArm64()
+
+    // jvm & js
     jvmToolchain(17)
     jvm()
 
     applyDefaultHierarchyTemplate()
     sourceSets {
+        val commonMain by getting {}
         val jvmMain by getting {
             dependencies {
                 api(project(":ktor-server-rabbitmq-java"))
             }
         }
-        /*
         val nonJvmMain by creating {
+            dependsOn(commonMain)
             dependencies {
                 api(project(":ktor-server-rabbitmq-kourier"))
             }
         }
-        */
+
+        // Make all non-JVM targets depend on the `nonJvmMain` source set
+        sourceSets
+            .filter { it.name.endsWith("Main") && it.name != "commonMain" && it.name != "jvmMain" }
+            .forEach { it.dependsOn(nonJvmMain) }
     }
 }

@@ -6,7 +6,7 @@ import kotlin.time.ExperimentalTime
 data class Properties(
     val contentType: String? = null,
     val contentEncoding: String? = null,
-    val headers: Map<String, Any>? = null,
+    val headers: Map<String, Any?>? = null,
     val deliveryMode: Int? = null,
     val priority: Int? = null,
     val correlationId: String? = null,

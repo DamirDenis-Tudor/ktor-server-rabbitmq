@@ -23,13 +23,13 @@ internal class Delegator<T : Any> {
      * @param ref the object instance containing the property.
      * @param property the property to access.
      * @return the value of the property if initialized.
-     * @throws UninitializedPropertyAccessException if the property is not initialized.
+     * @throws UninitializedPropertyException if the property is not initialized.
      */
     operator fun getValue(ref: Any, property: KProperty<*>): T {
         return when (val currentState = state) {
             is State.Initialized -> currentState.value
-            else -> throw UninitializedPropertyAccessException(
-                "Property <${property.javaClass}>: <${property.name}> must be initialized before accessing."
+            else -> throw UninitializedPropertyException(
+                "Property <${property.name}> must be initialized before accessing."
             )
         }
     }
@@ -44,7 +44,7 @@ internal class Delegator<T : Any> {
     operator fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
         state = State.Initialized(value)
         StateRegistry.addState(
-            propertyOf = thisRef.javaClass.name,
+            propertyOf = thisRef::class.qualifiedName!!,
             propertyName = property.name,
             state = state
         )

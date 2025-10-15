@@ -41,6 +41,30 @@ mavenPublishing {
 }
 
 kotlin {
+    // Tiers are in accordance with <https://kotlinlang.org/docs/native-target-support.html>
+    // Tier 1
+    macosX64()
+    macosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    // Tier 2
+    linuxX64()
+    linuxArm64()
+    watchosSimulatorArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+    tvosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    iosArm64()
+
+    // Tier 3
+    mingwX64()
+    watchosDeviceArm64()
+
+    // jvm & js
     jvmToolchain(17)
     jvm()
 
@@ -48,8 +72,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(kotlin("reflect"))
                 api(libs.ktor.server.core)
-                api(libs.ktor.server.netty)
                 api(libs.kotlinx.coroutines)
                 api(libs.kotlinx.serialization.json)
             }

@@ -7,6 +7,8 @@ import io.github.damir.denis.tudor.ktor.server.rabbitmq.delegator.StateRegistry.
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.RabbitDslMarker
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Channel
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Properties
+import io.ktor.utils.io.charsets.*
+import io.ktor.utils.io.core.*
 import kotlinx.serialization.json.Json
 
 @RabbitDslMarker
