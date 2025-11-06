@@ -3,7 +3,7 @@ package io.github.damir.denis.tudor.ktor.server.rabbitmq.connection
 import dev.kourier.amqp.AMQPException
 import dev.kourier.amqp.connection.AMQPConfig
 import dev.kourier.amqp.connection.amqpConfig
-import dev.kourier.amqp.connection.createAMQPConnection
+import dev.kourier.amqp.robust.createRobustAMQPConnection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.Connection
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.model.KourierConnection
 import kotlinx.coroutines.*
@@ -100,7 +100,7 @@ open class KourierConnectionManager(
 
             val connection = connectionCache.getOrPut(id) {
                 logger.debug("Creating new connection with id: <$id>.")
-                createAMQPConnection(
+                createRobustAMQPConnection(
                     coroutineScope,
                     amqpConfig.copy(server = amqpConfig.server.copy(connectionName = id))
                 ).let(::KourierConnection)
