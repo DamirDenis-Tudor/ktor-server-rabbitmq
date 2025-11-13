@@ -32,18 +32,18 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Prepare for publish
+      - name: Publish to Maven Central
         run: |
-          ./gradlew publish \
+          ./gradlew publishAllPublicationsToMavenCentral \
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
+            -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
+            -PmavenCentralPassword="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -Psigning.keyId="${{ secrets.SIGNING_KEY_ID }}" \
             -Psigning.password="${{ secrets.SIGNING_PASSWORD }}" \
             -Psigning.secretKeyRingFile="${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}"
 
-      - name: Release in Maven Central
+      - name: Release
         run: |
           ./gradlew jreleaserRelease \
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
-            -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
-            -PmavenCentralPasswordToken="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
             -PgithubToken="${{ secrets.GITHUB_TOKEN }}"
