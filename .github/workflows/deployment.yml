@@ -34,7 +34,7 @@ jobs:
 
       - name: Publish to Maven Central
         run: |
-          ./gradlew publishKotlinMultiplatformPublicationToMavenCentral \
+          ./gradlew publishAllPublicationsToMavenCentral \
             -PreleaseVersion="${{ steps.version.outputs.version }}" \
             -PmavenCentralUsername="${{ secrets.MAVEN_CENTRAL_USERNAME }}" \
             -PmavenCentralPassword="${{ secrets.MAVEN_CENTRAL_PASSWORD_TOKEN }}" \
