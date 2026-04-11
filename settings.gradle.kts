@@ -22,7 +22,7 @@ dependencyResolutionManagement {
 
             // AMQP clients
             library("amqp-java", "com.rabbitmq:amqp-client:5.24.0")
-            library("amqp-kourier", "dev.kourier:amqp-client-robust:0.3.2")
+            library("amqp-kourier", "dev.kourier:amqp-client-robust:0.4.3")
 
             // Tests
             library("tests-mockk", "io.mockk:mockk:1.13.12")
